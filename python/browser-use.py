@@ -1,6 +1,7 @@
 import os
 import asyncio
 import requests
+import uuid
 
 from typing import Optional
 from dotenv import load_dotenv
@@ -29,13 +30,18 @@ class UseBrowserContext(BrowserContext):
         playwright_browser = await self.browser.get_playwright_browser()
         context = await self._create_context(playwright_browser)
 
-        # Inject scripts before page loads
-        script_paths = ["ethers.js", "inject-wallet.js"]
+        session_uuid = str(uuid.uuid4())
+        await context.add_init_script(f'window.session = "{session_uuid}";')
+
+        wallet_relayer_base_url = os.getenv('WALLET_RELAYER_BASE_URL')
+        await context.add_init_script(f'window.relayer = "{wallet_relayer_base_url}";')
+
+        script_paths = ["inject-wallet.js"]
         for script_path in script_paths:
             full_path = os.path.abspath(script_path)
             with open(full_path, 'r') as file:
                 script_content = file.read()
-                await context.add_init_script(script_content)     
+                await context.add_init_script(script_content)   
 
         self._add_new_page_listener(context)
 

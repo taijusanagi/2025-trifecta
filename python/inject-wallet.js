@@ -1,15 +1,24 @@
 console.log("🚀 Injecting Headless Web3 Provider...");
 
 (async () => {
-  const ethers = window.ethers;
-  const privateKey =
-    "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
-  const wallet = new ethers.Wallet(privateKey);
+  const relayerBaseUrl = window.relayer || "http://localhost:3000/relayer";
+  const sessionId = window.session || "default-session";
+
+  async function fetchRelayerInfo() {
+    try {
+      const response = await fetch(`${relayerBaseUrl}/${sessionId}`);
+      const data = await response.json();
+      return { address: data.address, chainId: data.chainId };
+    } catch (error) {
+      console.error("Failed to fetch relayer info:", error);
+      return {
+        address: "0x0000000000000000000000000000000000000000",
+        chainId: "0x1",
+      };
+    }
+  }
 
   function createCustomEthereumProvider(options = {}) {
-    // Default RPC URL if not provided
-    const rpcUrl =
-      options.rpcUrl || "https://mainnet.infura.io/v3/YOUR_INFURA_KEY";
     // Default chainId for Ethereum mainnet
     const chainId = options.chainId || "0x1";
     // Optional private key for signing transactions
@@ -31,54 +40,24 @@ console.log("🚀 Injecting Headless Web3 Provider...");
 
       // Required method for EIP-1193 compliance
       async request({ method, params }) {
-        console.log("method", method);
-        console.log("method", params);
-
-        switch (method) {
-          case "eth_chainId":
-            return chainId;
-
-          case "eth_accounts":
-          case "eth_requestAccounts":
-            if (this._isConnected && this._accounts.length > 0) {
-              return [...this._accounts];
-            }
-            // If not connected, return empty array for eth_accounts
-            // or connect for eth_requestAccounts
-            if (method === "eth_accounts") {
-              return [];
-            } else {
-              await this.connect();
-              return [...this._accounts];
-            }
-
-          case "eth_getBalance":
-            // Implement or forward to actual provider
-            return this._sendToRpc(method, params);
-
-          case "eth_sendTransaction":
-            if (!privateKey) {
-              throw new Error("Private key required for sending transactions");
-            }
-            // In a real implementation, you would sign the transaction with the private key
-            // and then broadcast it to the network
-            return this._sendToRpc("eth_sendRawTransaction", [
-              /* signed tx */
-            ]);
-
-          case "personal_sign":
-            if (!params || params.length < 2) {
-              throw new Error("Invalid parameters for eth_personalSign");
-            }
-            const message = params[0];
-            const signedMessage = await wallet.signMessage(
-              ethers.getBytes(message)
-            );
-            return signedMessage;
-
-          default:
-            // Forward other requests to RPC
-            return this._sendToRpc(method, params);
+        console.log("Relaying request:", method, params);
+        try {
+          const response = await fetch(`${relayerBaseUrl}/${sessionId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: new Date().getTime(),
+              method,
+              params,
+            }),
+          });
+          const data = await response.json();
+          if (data.error) throw new Error(data.error.message || "RPC Error");
+          return data.result;
+        } catch (error) {
+          console.error("RPC relay failed:", error);
+          throw error;
         }
       },
 
@@ -160,7 +139,7 @@ console.log("🚀 Injecting Headless Web3 Provider...");
   // Create EIP-6963 compliant provider info object
   function createEIP6963ProviderInfo(provider, options = {}) {
     return {
-      uuid: options.uuid || crypto.randomUUID(), // Generate unique ID for the provider
+      uuid: window.session,
       name: options.name || "Custom Headless Provider",
       icon:
         options.icon ||
@@ -229,12 +208,13 @@ console.log("🚀 Injecting Headless Web3 Provider...");
     };
   }
 
+  const { address, chainId } = await fetchRelayerInfo();
+
   // Initialize the provider with configuration
   const { provider, providerInfo } = setupProviders({
-    rpcUrl: "https://eth.llamarpc.com", // Replace with your Infura key
-    chainId: "0x1", // Mainnet
-    defaultAccount: wallet.address,
-    accounts: [wallet.address],
+    chainId: chainId, // Mainnet
+    defaultAccount: address,
+    accounts: [address],
     providerName: "Headless Web3 Provider",
     providerRdns: "io.headless.provider",
   });
