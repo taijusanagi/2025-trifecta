@@ -1,1 +1,1 @@
-# 2025-trifecta
+# 2025 Trifecta
