@@ -1,10 +1,10 @@
 import os
 import requests
-import uuid
 
 from typing import Optional
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import uvicorn
 
 from browser_use import Agent, Browser, BrowserConfig
@@ -15,6 +15,9 @@ from langchain_openai import ChatOpenAI
 load_dotenv()
 
 app = FastAPI()
+
+class StartRequest(BaseModel):
+    session_id: str
 
 class ExtendedBrowserSession(BrowserSession):
     """Extended version of BrowserSession that includes current_page"""
@@ -28,16 +31,19 @@ class ExtendedBrowserSession(BrowserSession):
         self.current_page = current_page
 
 class UseBrowserContext(BrowserContext):
+    def __init__(self, browser: Browser, config: BrowserContextConfig, session_id: str):
+        super().__init__(browser, config)
+        self.session_id = session_id
+
     async def _initialize_session(self) -> ExtendedBrowserSession:
         """Initialize a browser session."""
         playwright_browser = await self.browser.get_playwright_browser()
         context = await self._create_context(playwright_browser)
 
-        session_uuid = str(uuid.uuid4())
-        await context.add_init_script(f'window.session = "{session_uuid}";')
+        await context.add_init_script(f'window.session = "{self.session_id}";')
 
-        wallet_relayer_base_url = os.getenv('WALLET_RELAYER_BASE_URL')
-        await context.add_init_script(f'window.relayer = "{wallet_relayer_base_url}";')
+        wallet_relayer_url = os.getenv('WALLET_RELAYER_URL')
+        await context.add_init_script(f'window.relayer = "{wallet_relayer_url}";')
 
         script_paths = ["inject-wallet.js"]
         for script_path in script_paths:
@@ -61,14 +67,13 @@ class UseBrowserContext(BrowserContext):
         
         return self.session
 
-async def setup_local_browser() -> tuple[Browser, UseBrowserContext]:
+async def setup_local_browser(session_id: str) -> tuple[Browser, UseBrowserContext]:
     """Set up a local Playwright browser and ensure browser_use.Browser() uses it."""
     print("Using Local Playwright Browser")
     playwright = await async_playwright().start()
     local_browser = await playwright.chromium.launch(headless=False)
 
     browser = Browser()
-    # Manually set the Playwright browser instance
     browser.playwright_browser = local_browser
 
     context = UseBrowserContext(
@@ -76,12 +81,13 @@ async def setup_local_browser() -> tuple[Browser, UseBrowserContext]:
         BrowserContextConfig(
             wait_for_network_idle_page_load_time=10.0,
             highlight_elements=True,
-        )
+        ),
+        session_id
     )
 
     return browser, context
 
-async def setup_anchor_browser() -> tuple[Browser, UseBrowserContext]:
+async def setup_anchor_browser(session_id: str) -> tuple[Browser, UseBrowserContext]:
     """Set up browser and context using AnchorBrowser."""
     print("Using AnchorBrowser")
     anchor_api_key = os.environ["ANCHOR_BROWSER_API_KEY"]
@@ -92,7 +98,7 @@ async def setup_anchor_browser() -> tuple[Browser, UseBrowserContext]:
             "Content-Type": "application/json",
         },
         json={
-            "headless": False,  # Use headless false to view the browser
+            "headless": False,
             "recording": {"active": True},
         }
     ).json()
@@ -108,23 +114,24 @@ async def setup_anchor_browser() -> tuple[Browser, UseBrowserContext]:
         BrowserContextConfig(
             wait_for_network_idle_page_load_time=10.0,
             highlight_elements=True,
-        )
+        ),
+        session_id
     )
 
     return browser, context
 
-async def setup_browser() -> tuple[Browser, UseBrowserContext]:
+async def setup_browser(session_id: str) -> tuple[Browser, UseBrowserContext]:
     """Determine whether to use Local Playwright or AnchorBrowser."""
     load_dotenv()
     
     use_local = os.getenv("USE_LOCAL_BROWSER", "false").lower() == "true"
 
     if use_local:
-        return await setup_local_browser()
+        return await setup_local_browser(session_id)
     else:
         if "ANCHOR_BROWSER_API_KEY" not in os.environ:
             raise EnvironmentError("ANCHOR_BROWSER_API_KEY is required for AnchorBrowser.")
-        return await setup_anchor_browser()
+        return await setup_anchor_browser(session_id)
 
 async def setup_agent(browser: Browser, context: UseBrowserContext) -> Agent:
     """Set up the browser automation agent."""
@@ -137,13 +144,17 @@ async def setup_agent(browser: Browser, context: UseBrowserContext) -> Agent:
     )
 
 @app.post("/start")
-async def start():
-    """API endpoint to start the browser"""
+async def start(request: StartRequest):
+    """API endpoint to start the browser with a user-defined session ID."""
     try:
-        browser, context = await setup_browser()
+        session_id = request.session_id
+        if not session_id:
+            raise HTTPException(status_code=400, detail="session_id is required.")
+
+        browser, context = await setup_browser(session_id)
         agent = await setup_agent(browser, context)
         await agent.run()
-        return {"status": "success", "message": "Browser started successfully"}
+        return {"status": "success", "message": "Browser started successfully", "session_id": session_id}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
