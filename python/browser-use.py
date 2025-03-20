@@ -1,10 +1,11 @@
 import os
-import asyncio
 import requests
 import uuid
 
 from typing import Optional
 from dotenv import load_dotenv
+from fastapi import FastAPI
+import uvicorn
 
 from browser_use import Agent, Browser, BrowserConfig
 from browser_use.browser.context import BrowserContext, BrowserContextConfig, BrowserSession
@@ -12,6 +13,8 @@ from playwright.async_api import async_playwright, Page, BrowserContext as Playw
 from langchain_openai import ChatOpenAI
 
 load_dotenv()
+
+app = FastAPI()
 
 class ExtendedBrowserSession(BrowserSession):
     """Extended version of BrowserSession that includes current_page"""
@@ -133,14 +136,16 @@ async def setup_agent(browser: Browser, context: UseBrowserContext) -> Agent:
         use_vision=True, 
     )
 
-async def main():
-    browser, context = await setup_browser()
-    
+@app.post("/start")
+async def start():
+    """API endpoint to start the browser"""
     try:
+        browser, context = await setup_browser()
         agent = await setup_agent(browser, context)
         await agent.run()
-    finally:
-        await browser.close()
+        return {"status": "success", "message": "Browser started successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvicorn.run(app, host="0.0.0.0", port=8000)
