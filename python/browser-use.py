@@ -129,7 +129,6 @@ async def setup_agent(browser: Browser, context: UseBrowserContext) -> Agent:
 
 async def main():
     browser, context = await setup_browser()
-    session = await context.get_session()
     
     try:
         agent = await setup_agent(browser, context)
