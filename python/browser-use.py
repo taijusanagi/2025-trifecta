@@ -29,6 +29,14 @@ class UseBrowserContext(BrowserContext):
         playwright_browser = await self.browser.get_playwright_browser()
         context = await self._create_context(playwright_browser)
 
+        # Inject scripts before page loads
+        script_paths = ["ethers.js", "inject-wallet.js"]
+        for script_path in script_paths:
+            full_path = os.path.abspath(script_path)
+            with open(full_path, 'r') as file:
+                script_content = file.read()
+                await context.add_init_script(script_content)     
+
         self._add_new_page_listener(context)
 
         self.session = ExtendedBrowserSession(
