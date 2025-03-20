@@ -39,7 +39,7 @@ export async function POST(
         result = relayerInfo.chainId;
         break;
       default:
-        result = `Handled method: ${body.method}`;
+        result = `NOT IMPLEMENTED: ${body.method}`;
     }
 
     const response = {
