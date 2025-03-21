@@ -1,4 +1,5 @@
 import os
+import random
 
 from typing import Optional
 from dotenv import load_dotenv
@@ -148,7 +149,7 @@ async def setup_agent(browser: Browser, context: UseBrowserContext, task: str) -
     """Set up the browser automation agent."""
     return Agent(
         task=task,
-        llm=ChatOpenAI(model="gpt-4o-mini"),
+        llm=ChatOpenAI(model="gpt-4o"),
         browser=browser,
         browser_context=context,
         use_vision=True, 
@@ -168,7 +169,7 @@ async def start(request: StartRequest):
 
         browser, context = await setup_browser(session_id, anchor_session_id)
         agent = await setup_agent(browser, context, task)
-        result = await agent.run()
+        result = await agent.run(max_steps=100)
         return {"status": "success", "message": "Browser started successfully", "session_id": session_id, "result": result}
     except Exception as e:
         return {"status": "error", "message": str(e)}
