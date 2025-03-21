@@ -32,12 +32,12 @@ export async function POST(
         result = chainId;
         break;
       case "personal_sign":
+      case "eth_sendTransaction":
         await setSessionRequest(sessionId, body);
         result = await waitForSessionResponse(sessionId);
         deleteSessionRequest(sessionId);
         deleteSessionResponse(sessionId);
         break;
-
       default:
         result = `NOT IMPLEMENTED: ${body.method}`;
     }

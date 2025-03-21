@@ -18,7 +18,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [task, setTask] = useState(
-    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Enable Logging. Cick login. Click View all wallets. Click Headless Web3 Provider. Do not input email address."
+    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail."
   );
   const [history, setHistory] = useState<any[]>([]);
 
@@ -33,6 +33,7 @@ export default function Home() {
       if (!walletClient) {
         throw new Error("Wallet client not available");
       }
+      console.log("Handling wallet request:", request);
       try {
         let result;
         if (request.method === "eth_sendTransaction" && request.params) {
@@ -120,18 +121,22 @@ export default function Home() {
       setSessionId(sessionId);
       setIsPolling(true);
 
-      const anchorbrowserResponse = await fetch("/anchorbrowser", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      let anchorSessionId = "";
+      if (process.env.NEXT_PUBLIC_IS_LOCAL_BROWSER !== "true") {
+        const anchorbrowserResponse = await fetch("/anchorbrowser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
 
-      if (!anchorbrowserResponse.ok) {
-        throw new Error("Failed to start anchorbrowser.");
+        if (!anchorbrowserResponse.ok) {
+          throw new Error("Failed to start anchorbrowser.");
+        }
+
+        const { id, live_view_url: liveViewUrl } =
+          await anchorbrowserResponse.json();
+        setLiveViewUrl(liveViewUrl);
+        anchorSessionId = id;
       }
-
-      const { id: anchorSessionId, live_view_url: liveViewUrl } =
-        await anchorbrowserResponse.json();
-      setLiveViewUrl(liveViewUrl);
 
       const startResponse = await fetch(`${BROWSER_USE_API_URL}/start`, {
         method: "POST",
