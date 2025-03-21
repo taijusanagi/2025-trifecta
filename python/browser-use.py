@@ -1,5 +1,4 @@
 import os
-import requests
 
 from typing import Optional
 from dotenv import load_dotenv
@@ -28,6 +27,7 @@ app.add_middleware(
 class StartRequest(BaseModel):
     session_id: str
     task: str
+    anchor_session_id: Optional[str] = None
 
 controller = Controller()
 
@@ -106,28 +106,14 @@ async def setup_local_browser(session_id: str) -> tuple[Browser, UseBrowserConte
 
     return browser, context
 
-async def setup_anchor_browser(session_id: str) -> tuple[Browser, UseBrowserContext]:
-    """Set up browser and context using AnchorBrowser."""
-    print("Using AnchorBrowser")
+async def setup_anchor_browser(session_id: str, anchor_session_id: str) -> tuple[Browser, UseBrowserContext]:
+    """Set up a browser using AnchorBrowser with a known Anchor session ID and connect via its CDP URL."""
+    print(f"Connecting to external browser via CDP URL...")
     anchor_api_key = os.environ["ANCHOR_BROWSER_API_KEY"]
-    response = requests.post(
-        "https://api.anchorbrowser.io/api/sessions",
-        headers={
-            "anchor-api-key": anchor_api_key,
-            "Content-Type": "application/json",
-        },
-        json={
-            "headless": False,
-            "recording": {"active": True},
-        }
-    ).json()
-    
-    print("Live View URL:", response["live_view_url"])
-    
-    browser = Browser(config=BrowserConfig(
-        cdp_url=f"wss://connect.anchorbrowser.io?apiKey={anchor_api_key}&sessionId={response['id']}"
+    browser = Browser(config=BrowserConfig(        
+        cdp_url=f"wss://connect.anchorbrowser.io?apiKey={anchor_api_key}&sessionId={anchor_session_id}"
     ))
-    
+
     context = UseBrowserContext(
         browser,
         BrowserContextConfig(
@@ -139,18 +125,14 @@ async def setup_anchor_browser(session_id: str) -> tuple[Browser, UseBrowserCont
 
     return browser, context
 
-async def setup_browser(session_id: str) -> tuple[Browser, UseBrowserContext]:
-    """Determine whether to use Local Playwright or AnchorBrowser."""
+async def setup_browser(session_id: str, anchor_session_id: Optional[str]) -> tuple[Browser, UseBrowserContext]:
+    """Determine which browser setup to use."""
     load_dotenv()
-    
-    use_local = os.getenv("USE_LOCAL_BROWSER", "false").lower() == "true"
 
-    if use_local:
-        return await setup_local_browser(session_id)
-    else:
-        if "ANCHOR_BROWSER_API_KEY" not in os.environ:
-            raise EnvironmentError("ANCHOR_BROWSER_API_KEY is required for AnchorBrowser.")
-        return await setup_anchor_browser(session_id)
+    if anchor_session_id:
+        return await setup_anchor_browser(session_id, anchor_session_id)
+
+    return await setup_local_browser(session_id)
 
 async def setup_agent(browser: Browser, context: UseBrowserContext, task: str) -> Agent:
     """Set up the browser automation agent."""
@@ -169,11 +151,12 @@ async def start(request: StartRequest):
     try:
         session_id = request.session_id
         task = request.task
+        anchor_session_id = request.anchor_session_id
 
         if not session_id:
             raise HTTPException(status_code=400, detail="session_id is required.")
 
-        browser, context = await setup_browser(session_id)
+        browser, context = await setup_browser(session_id, anchor_session_id)
         agent = await setup_agent(browser, context, task)
         result = await agent.run()
         return {"status": "success", "message": "Browser started successfully", "session_id": session_id, "result": result}

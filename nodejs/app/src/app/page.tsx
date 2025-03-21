@@ -18,13 +18,15 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [task, setTask] = useState(
-    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Then login or connect. If you need to choose wallet, choose Headless Web3 Provider or Injected Wallet or Metamask. If you need to choose chain, choose Base Network. Then get one collection name."
+    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Open developer tool to show the console. Cick login or connect. If you need to choose wallet, choose Headless Web3 Provider or Injected Wallet or Metamask. If you need to choose chain, choose EVM Base Network. Then get one collection name."
   );
   const [history, setHistory] = useState<any[]>([]);
 
   const [isPolling, setIsPolling] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isPollingRef = useRef(false);
+
+  const [liveViewUrl, setLiveViewUrl] = useState("");
 
   const handleWalletRequest = useCallback(
     async (request: JsonRpcRequest) => {
@@ -118,14 +120,31 @@ export default function Home() {
       setSessionId(sessionId);
       setIsPolling(true);
 
+      const anchorbrowserResponse = await fetch("/anchorbrowser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!anchorbrowserResponse.ok) {
+        throw new Error("Failed to start anchorbrowser.");
+      }
+
+      const { id: anchorSessionId, live_view_url: liveViewUrl } =
+        await anchorbrowserResponse.json();
+      setLiveViewUrl(liveViewUrl);
+
       const startResponse = await fetch(`${BROWSER_USE_API_URL}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, task }),
+        body: JSON.stringify({
+          session_id: sessionId,
+          task,
+          anchor_session_id: anchorSessionId,
+        }),
       });
 
       if (!startResponse.ok) {
-        throw new Error("Failed to start browser use session.");
+        throw new Error("Failed to start browser-use.");
       }
 
       const {
@@ -157,10 +176,26 @@ export default function Home() {
           placeholder="Enter a task for the session"
           className="w-full min-h-[100px]"
         />
+
         {!sessionId && (
           <Button onClick={handleStart} disabled={loading}>
             {loading ? "Starting..." : "Start"}
           </Button>
+        )}
+
+        {liveViewUrl && (
+          <div className="mt-6 w-full">
+            <h2 className="text-lg font-semibold mb-2">Live View</h2>
+            <div className="aspect-video w-full border rounded-md overflow-hidden">
+              <iframe
+                src={liveViewUrl}
+                title="Live View"
+                className="w-full h-full"
+                allow="clipboard-read; clipboard-write"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            </div>
+          </div>
         )}
 
         {/* Session Status */}
