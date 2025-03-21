@@ -10,7 +10,7 @@ import { hexToString } from "viem";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
-  const POLLING_INTERVAL = 1000;
+  const POLLING_INTERVAL = 5000;
 
   const { address, chain } = useAccount();
   const { data: walletClient } = useWalletClient();
@@ -61,14 +61,9 @@ export default function Home() {
   );
 
   const pollForRequests = useCallback(async () => {
-    console.log("pollForRequests 1...");
-    // Return early if no session or already polling
-    if (!sessionId || !isPolling || isPollingRef.current) {
-      return;
-    }
-    console.log("pollForRequests 2...");
+    // Return early if conditions aren't met
+    if (!sessionId || !isPolling || isPollingRef.current) return;
 
-    // Set polling flag to prevent concurrent polling
     isPollingRef.current = true;
 
     try {
@@ -77,40 +72,32 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
       });
 
-      if (!response.ok) {
-        console.log("Failed to fetch request");
-        // Don't throw, just log and continue
-      } else {
+      if (response.ok) {
         const data = await response.json();
-        console.log("data", data);
-        // If we have a request to process
+
         if (data && data.id) {
-          setIsPolling(false);
           const request: JsonRpcRequest = data;
-          console.log("Received request:", request);
 
           try {
-            // Process the request with the wallet
             const { result } = await handleWalletRequest(request);
-            console.log("result", result);
 
-            // Send the result back to the relayer
             await fetch(`/relayer/${sessionId}/response`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                result,
-              }),
+              body: JSON.stringify({ result }),
             });
 
-            setHistory((prev) => [
-              ...prev,
-              {
-                type: "wallet_request",
-                request,
-                response: result,
-              },
-            ]);
+            // Only update state if still polling
+            if (isPolling) {
+              setHistory((prev) => [
+                ...prev,
+                {
+                  type: "wallet_request",
+                  request,
+                  response: result,
+                },
+              ]);
+            }
           } catch (reqError) {
             console.error("Error processing request:", reqError);
           }
@@ -119,17 +106,11 @@ export default function Home() {
     } catch (error) {
       console.error("Error in polling:", error);
     } finally {
-      // Reset polling flag
       isPollingRef.current = false;
 
-      // Only continue polling if still active
+      // Schedule next poll if still polling
       if (isPolling) {
-        // Clear any existing timeout
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-
-        // Schedule next poll
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(pollForRequests, POLLING_INTERVAL);
       }
     }
@@ -151,15 +132,6 @@ export default function Home() {
     };
   }, [sessionId, isPolling, pollForRequests]);
 
-  // Toggle polling state when sessionId changes
-  useEffect(() => {
-    if (sessionId && !isPolling) {
-      setIsPolling(true);
-    } else if (!sessionId && isPolling) {
-      setIsPolling(false);
-    }
-  }, [sessionId, isPolling]);
-
   const handleStart = async () => {
     if (!address || !chain?.id) {
       throw new Error("Please connect your wallet first.");
@@ -180,6 +152,7 @@ export default function Home() {
 
       const { sessionId: newSessionId } = await createSessionResponse.json();
       setSessionId(newSessionId);
+      setIsPolling(true);
 
       const startResponse = await fetch(`${BROWSER_USE_API_URL}/start`, {
         method: "POST",
