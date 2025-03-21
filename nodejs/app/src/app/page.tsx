@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function Home() {
@@ -8,7 +9,9 @@ export default function Home() {
       <header>
         <ConnectButton />
       </header>
-      <main></main>
+      <main>
+        <Button>Start</Button>
+      </main>
     </div>
   );
 }
