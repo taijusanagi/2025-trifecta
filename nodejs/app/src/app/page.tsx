@@ -86,18 +86,6 @@ export default function Home() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ result }),
             });
-
-            // Only update state if still polling
-            if (isPolling) {
-              setHistory((prev) => [
-                ...prev,
-                {
-                  type: "wallet_request",
-                  request,
-                  response: result,
-                },
-              ]);
-            }
           } catch (reqError) {
             console.error("Error processing request:", reqError);
           }
@@ -207,19 +195,6 @@ export default function Home() {
             <p className="text-sm">
               Session active: <span className="font-mono">{sessionId}</span>
             </p>
-            <p className="text-xs text-green-700">
-              {isPolling ? "Listening for wallet requests..." : "Idle"}
-            </p>
-            {isPolling && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2 text-xs"
-                onClick={stopPolling}
-              >
-                Stop Polling
-              </Button>
-            )}
           </div>
         )}
 
