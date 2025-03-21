@@ -170,11 +170,21 @@ def to_serializable(obj):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
+    browser = context = None
     try:
-        data = json.loads(request.text)
-        session_id = data["session_id"]
-        task = data["task"]
-        anchor_session_id = data["anchor_session_id"]
+        # data = json.loads(request.text)
+        # session_id = data["session_id"]
+        # task = data["task"]
+        # anchor_session_id = data["anchor_session_id"]
+        try:
+            data = json.loads(request.text)
+            task = data["task"]
+            session_id = data["session_id"]
+            anchor_session_id = data["anchor_session_id"]
+        except json.JSONDecodeError:
+            task = request.text
+            session_id = "default"
+            anchor_session_id = None
         browser, context = await setup_browser(session_id, anchor_session_id)
         agent = await setup_agent(browser, context, task)
         result = await agent.run(max_steps=100)
@@ -183,6 +193,11 @@ async def chat(request: ChatRequest):
         return ChatResponse(text=json.dumps(json_ready))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if context:
+            await context.close()
+        if browser:
+            await browser.close()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

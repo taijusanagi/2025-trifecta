@@ -170,31 +170,6 @@ export default function Home() {
     }
   }, [sessionId, isPolling, pollForRequests]);
 
-  function parse(input: string) {
-    const match = input.match(/^AgentHistoryList\((.*)\)$/);
-
-    if (!match) {
-      throw new Error("Input string does not match expected format.");
-    }
-
-    const inner = match[1];
-
-    // Step 2: Replace Python/Custom syntax with JSON-compatible syntax
-    let jsonCompatible = inner
-      .replace(/ActionResult\(/g, "{") // Replace ActionResult( with {
-      .replace(/\)/g, "}") // Replace all ) with }
-      .replace(/True/g, "true") // Python True -> JS true
-      .replace(/False/g, "false") // Python False -> JS false
-      .replace(/None/g, "null") // Python None -> JS null
-      .replace(/'/g, '"') // single quotes -> double quotes
-      .replace(/(\w+)=/g, '"$1":'); // key= -> "key":
-
-    // Step 3: Wrap with braces and parse as a JS object
-    const wrapped = `{${jsonCompatible}}`;
-
-    return JSON.parse(wrapped);
-  }
-
   return (
     <div className="p-6">
       <header className="mb-4">
