@@ -12,7 +12,7 @@ export default function Home() {
   const { address, chain } = useAccount();
   const [loading, setLoading] = useState(false);
   const [task, setTask] = useState(
-    "Go to https://metamask.github.io/test-dapp/ and get the connected wallet address"
+    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Then login or connect. If you need to choose wallet, choose Headless Web3 Provider or Injected Wallet or Metamask. If you need to choose chain, choose Base Network."
   );
   const [history, setHistory] = useState<any[]>([]); // Store history array
 
@@ -86,9 +86,7 @@ export default function Home() {
                   key={index}
                   className="p-3 border rounded-md bg-gray-100 text-sm"
                 >
-                  <p className="font-medium">
-                    Step {step.metadata.step_number}:
-                  </p>
+                  <p className="font-medium">Step {index}:</p>
                   <p>{step.result[0]?.extracted_content}</p>
                   <p className="text-xs text-gray-600">
                     Success: {step.result[0]?.success ? "✅" : "❌"} | Done:{" "}

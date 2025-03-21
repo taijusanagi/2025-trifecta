@@ -5,7 +5,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from browser_use import Agent, Browser, BrowserConfig
+from browser_use import ActionResult, Agent, Browser, BrowserConfig, Controller
 from browser_use.browser.context import BrowserContext, BrowserContextConfig, BrowserSession
 from playwright.async_api import async_playwright, Page, BrowserContext as PlaywrightContext
 from langchain_openai import ChatOpenAI
@@ -28,6 +28,15 @@ app.add_middleware(
 class StartRequest(BaseModel):
     session_id: str
     task: str
+
+controller = Controller()
+
+@controller.registry.action("Add Magic Eden extra https header origin")
+async def configure_magic_eden_header(browser: BrowserContext):
+    page = await browser.get_current_page()
+    await page.set_extra_http_headers({"Origin": "https://magiceden.io"})
+    msg = f"🛠️  Configured Magic Eden header"
+    return ActionResult(extracted_content=msg, include_in_memory=True)
 
 class ExtendedBrowserSession(BrowserSession):
     """Extended version of BrowserSession that includes current_page"""
@@ -151,6 +160,7 @@ async def setup_agent(browser: Browser, context: UseBrowserContext, task: str) -
         browser=browser,
         browser_context=context,
         use_vision=True, 
+        controller=controller
     )
 
 @app.post("/start")

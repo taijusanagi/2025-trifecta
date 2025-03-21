@@ -34,16 +34,20 @@ export async function POST(
   try {
     const { sessionId } = await params;
     const body: JsonRpcRequest = await req.json();
-    // console.log(`Received request for session ${sessionId}:`, body);
-
+    console.log(`Received request for session ${sessionId}:`, body);
+    const { address, chainId } = await getSessionAccount(sessionId);
     let result;
     switch (body.method) {
+      case "eth_account":
+        result = address;
+        break;
       case "eth_accounts":
-        const { address } = await getSessionAccount(sessionId);
+        result = [address];
+        break;
+      case "eth_requestAccounts":
         result = [address];
         break;
       case "eth_chainId":
-        const { chainId } = await getSessionAccount(sessionId);
         result = chainId;
         break;
       default:
