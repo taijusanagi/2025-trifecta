@@ -18,14 +18,12 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [task, setTask] = useState(
-    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Then login or connect. If you need to choose wallet, choose Headless Web3 Provider or Injected Wallet or Metamask. If you need to choose chain, choose Base Network."
+    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Then login or connect. If you need to choose wallet, choose Headless Web3 Provider or Injected Wallet or Metamask. If you need to choose chain, choose Base Network. Then get one collection name."
   );
   const [history, setHistory] = useState<any[]>([]);
-  const [isPolling, setIsPolling] = useState(false);
 
-  // Use a ref to track the timeout ID for proper cleanup
+  const [isPolling, setIsPolling] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Use a ref to prevent concurrent polling
   const isPollingRef = useRef(false);
 
   const handleWalletRequest = useCallback(
@@ -33,9 +31,6 @@ export default function Home() {
       if (!walletClient) {
         throw new Error("Wallet client not available");
       }
-
-      console.log("handleWalletRequest", request);
-
       try {
         let result;
         if (request.method === "eth_sendTransaction" && request.params) {
@@ -62,7 +57,7 @@ export default function Home() {
 
   const pollForRequests = useCallback(async () => {
     // Return early if conditions aren't met
-    if (!sessionId || !isPolling || isPollingRef.current) return;
+    if (!sessionId || isPollingRef.current) return;
 
     isPollingRef.current = true;
 
@@ -96,29 +91,10 @@ export default function Home() {
     } finally {
       isPollingRef.current = false;
 
-      // Schedule next poll if still polling
-      if (isPolling) {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(pollForRequests, POLLING_INTERVAL);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(pollForRequests, POLLING_INTERVAL);
     }
-  }, [sessionId, isPolling, handleWalletRequest]);
-
-  // Handle polling initialization and cleanup
-  useEffect(() => {
-    if (sessionId && isPolling) {
-      // Start polling immediately
-      pollForRequests();
-    }
-
-    // Cleanup function to stop polling when component unmounts or dependencies change
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-  }, [sessionId, isPolling, pollForRequests]);
+  }, [sessionId, handleWalletRequest]);
 
   const handleStart = async () => {
     if (!address || !chain?.id) {
@@ -138,14 +114,14 @@ export default function Home() {
         throw new Error("Failed to create relayer session.");
       }
 
-      const { sessionId: newSessionId } = await createSessionResponse.json();
-      setSessionId(newSessionId);
+      const { sessionId } = await createSessionResponse.json();
+      setSessionId(sessionId);
       setIsPolling(true);
 
       const startResponse = await fetch(`${BROWSER_USE_API_URL}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: newSessionId, task }),
+        body: JSON.stringify({ session_id: sessionId, task }),
       });
 
       if (!startResponse.ok) {
@@ -153,10 +129,9 @@ export default function Home() {
       }
 
       const {
-        result: { history: sessionHistory },
+        result: { history },
       } = await startResponse.json();
-      console.log("history", sessionHistory);
-      setHistory(sessionHistory); // Update state to display history
+      setHistory(history); // Update state to display history
     } catch (error) {
       console.error(error);
     } finally {
@@ -164,14 +139,11 @@ export default function Home() {
     }
   };
 
-  // Add a function to stop polling manually if needed
-  const stopPolling = useCallback(() => {
-    setIsPolling(false);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+  useEffect(() => {
+    if (sessionId && isPolling) {
+      pollForRequests();
     }
-  }, []);
+  }, [sessionId, isPolling, pollForRequests]);
 
   return (
     <div className="p-6">
@@ -185,9 +157,11 @@ export default function Home() {
           placeholder="Enter a task for the session"
           className="w-full min-h-[100px]"
         />
-        <Button onClick={handleStart} disabled={loading}>
-          {loading ? "Starting..." : "Start"}
-        </Button>
+        {!sessionId && (
+          <Button onClick={handleStart} disabled={loading}>
+            {loading ? "Starting..." : "Start"}
+          </Button>
+        )}
 
         {/* Session Status */}
         {sessionId && (
@@ -227,10 +201,6 @@ export default function Home() {
                     <>
                       <p className="font-medium">Step {index}:</p>
                       <p>{step.result?.[0]?.extracted_content}</p>
-                      <p className="text-xs text-gray-600">
-                        Success: {step.result?.[0]?.success ? "✅" : "❌"} |
-                        Done: {step.result?.[0]?.is_done ? "✅" : "❌"}
-                      </p>
                     </>
                   )}
                 </li>
