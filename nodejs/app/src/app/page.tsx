@@ -3,18 +3,21 @@
 import { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea"; // <-- import ShadCN textarea
 import { useAccount } from "wagmi";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
 
-  const { address, chain, isConnected } = useAccount();
+  const { address, chain } = useAccount();
   const [loading, setLoading] = useState(false);
+  const [task, setTask] = useState(
+    "Go to https://metamask.github.io/test-dapp/ and get the connected wallet address"
+  );
 
   const handleStart = async () => {
     if (!address || !chain?.id) {
-      alert("Please connect your wallet first.");
-      return;
+      throw new Error("Please connect your wallet first.");
     }
 
     setLoading(true);
@@ -33,21 +36,21 @@ export default function Home() {
 
       const { sessionId } = await relayerResponse.json();
 
-      // Step 2: Post to BROWSER_USE_API_URL/start
+      // Step 2: Post to BROWSER_USE_API_URL/start with task
       const startResponse = await fetch(`${BROWSER_USE_API_URL}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId }),
+        body: JSON.stringify({ session_id: sessionId, task }),
       });
 
       if (!startResponse.ok) {
         throw new Error("Failed to start browser use session.");
       }
 
-      alert("Session started successfully!");
+      const { history } = await startResponse.json();
+      console.log("history", history);
     } catch (error) {
       console.error(error);
-      alert(error.message);
     } finally {
       setLoading(false);
     }
@@ -58,7 +61,13 @@ export default function Home() {
       <header className="mb-4">
         <ConnectButton />
       </header>
-      <main className="flex flex-col items-center gap-4">
+      <main className="flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
+        <Textarea
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          placeholder="Enter a task for the session"
+          className="w-full min-h-[100px]"
+        />
         <Button onClick={handleStart} disabled={loading}>
           {loading ? "Starting..." : "Start"}
         </Button>

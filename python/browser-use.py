@@ -27,6 +27,7 @@ app.add_middleware(
 
 class StartRequest(BaseModel):
     session_id: str
+    task: str
 
 class ExtendedBrowserSession(BrowserSession):
     """Extended version of BrowserSession that includes current_page"""
@@ -142,10 +143,10 @@ async def setup_browser(session_id: str) -> tuple[Browser, UseBrowserContext]:
             raise EnvironmentError("ANCHOR_BROWSER_API_KEY is required for AnchorBrowser.")
         return await setup_anchor_browser(session_id)
 
-async def setup_agent(browser: Browser, context: UseBrowserContext) -> Agent:
+async def setup_agent(browser: Browser, context: UseBrowserContext, task: str) -> Agent:
     """Set up the browser automation agent."""
     return Agent(
-        task="Go to https://metamask.github.io/test-dapp/ and check the wallet connection",
+        task=task,
         llm=ChatOpenAI(model="gpt-4o-mini"),
         browser=browser,
         browser_context=context,
@@ -157,13 +158,15 @@ async def start(request: StartRequest):
     """API endpoint to start the browser with a user-defined session ID."""
     try:
         session_id = request.session_id
+        task = request.task
+
         if not session_id:
             raise HTTPException(status_code=400, detail="session_id is required.")
 
         browser, context = await setup_browser(session_id)
-        agent = await setup_agent(browser, context)
-        await agent.run()
-        return {"status": "success", "message": "Browser started successfully", "session_id": session_id}
+        agent = await setup_agent(browser, context, task)
+        history = await agent.run()
+        return {"status": "success", "message": "Browser started successfully", "session_id": session_id, "history": history}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
