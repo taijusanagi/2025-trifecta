@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { kv } from "@vercel/kv";
+import { setSessionAccount } from "@/lib/relayer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,10 +11,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
     const sessionId = uuidv4();
-    console.log("session created", sessionId);
-    await kv.set(`${sessionId}:account`, JSON.stringify({ address, chainId }));
+    await setSessionAccount(sessionId, { address, chainId });
     return NextResponse.json({ sessionId });
   } catch (error) {
     console.error("Error creating session:", error);

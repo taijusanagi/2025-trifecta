@@ -1,31 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
-
-import { Account } from "@/types/account";
-
-interface JsonRpcRequest {
-  jsonrpc: string;
-  id: number;
-  method: string;
-  params?: any[];
-}
-
-const getSessionAccount = async (sessionId: string) => {
-  const sessionAccountData = await kv.get(`${sessionId}:account`);
-  if (!sessionAccountData) {
-    throw new Error("Session not found");
-  }
-  return sessionAccountData as Account;
-};
-
-export async function GET(
-  _: NextRequest,
-  { params }: { params: { sessionId: string } }
-) {
-  const { sessionId } = await params;
-  const sessionAccount = await getSessionAccount(sessionId);
-  return NextResponse.json(sessionAccount);
-}
+import {
+  getSessionAccount,
+  setSessionRequest,
+  waitForSessionResponse,
+  deleteSessionRequest,
+  deleteSessionResponse,
+} from "@/lib/relayer";
+import { JsonRpcRequest } from "@/types/json-rpc-request";
 
 export async function POST(
   req: NextRequest,
@@ -50,6 +31,13 @@ export async function POST(
       case "eth_chainId":
         result = chainId;
         break;
+      case "personal_sign":
+        await setSessionRequest(sessionId, body);
+        result = await waitForSessionResponse(sessionId);
+        deleteSessionRequest(sessionId);
+        deleteSessionResponse(sessionId);
+        break;
+
       default:
         result = `NOT IMPLEMENTED: ${body.method}`;
     }

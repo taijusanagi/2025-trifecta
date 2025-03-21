@@ -6,10 +6,8 @@ console.log("🚀 Injecting Headless Web3 Provider...");
 
   async function fetchRelayerInfo() {
     try {
-      const response = await fetch(`${relayerBaseUrl}/${sessionId}`);
+      const response = await fetch(`${relayerBaseUrl}/${sessionId}/info`);
       const data = await response.json();
-      console.log("fetchRelayerInfo:res", data.address);
-
       return { address: data.address, chainId: data.chainId };
     } catch (error) {
       console.error("Failed to fetch relayer info:", error);
@@ -42,7 +40,6 @@ console.log("🚀 Injecting Headless Web3 Provider...");
 
       // Required method for EIP-1193 compliance
       async request({ method, params }) {
-        console.log("Relaying request:", method, params);
         try {
           const response = await fetch(`${relayerBaseUrl}/${sessionId}`, {
             method: "POST",
