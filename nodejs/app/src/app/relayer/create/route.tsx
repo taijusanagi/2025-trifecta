@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     }
 
     const sessionId = uuidv4();
-    await kv.set(sessionId, JSON.stringify({ address, chainId }));
+    await kv.set(`${sessionId}:account`, JSON.stringify({ address, chainId }));
 
     return NextResponse.json({ sessionId });
   } catch (error) {
