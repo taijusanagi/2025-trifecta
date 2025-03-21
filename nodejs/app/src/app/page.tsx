@@ -18,7 +18,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [task, setTask] = useState(
-    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Open developer tool to show the console. Cick login or connect. If you need to choose wallet, choose Headless Web3 Provider or Injected Wallet or Metamask. If you need to choose chain, choose EVM Base Network. Then get one collection name."
+    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Enable Logging. Cick login. Click View all wallets. Click Headless Web3 Provider. Do not input email address."
   );
   const [history, setHistory] = useState<any[]>([]);
 

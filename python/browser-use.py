@@ -31,6 +31,16 @@ class StartRequest(BaseModel):
 
 controller = Controller()
 
+@controller.registry.action("Enable Logging")
+async def enable_logging(browser: BrowserContext):
+    page = await browser.get_current_page()
+    page.on("console", lambda msg: print(msg.text))
+    page.on("request", lambda request: print(">>", request.method, request.url))
+    page.on("response", lambda response: print("<<", response.status, response.url))
+    msg = f"🛠️  Enabled logging"
+    return ActionResult(extracted_content=msg, include_in_memory=True)
+
+
 @controller.registry.action("Add Magic Eden extra https header origin")
 async def configure_magic_eden_header(browser: BrowserContext):
     page = await browser.get_current_page()
