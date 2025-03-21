@@ -149,12 +149,6 @@ async def setup_agent(browser: Browser, context: UseBrowserContext, task: str) -
     return Agent(
         task=task,
         llm=ChatOpenAI(model="gpt-4o"),
-        # This should work after problem is fixed in api
-        # llm = ChatOpenAI(
-        #     openai_api_key=os.environ["SECRET_LLM_API_KEY"],
-        #     openai_api_base="https://nilai-a779.nillion.network/v1",
-        #     model="meta-llama/Llama-3.1-8B-Instruct"
-        # ),
         browser=browser,
         browser_context=context,
         use_vision=True, 
