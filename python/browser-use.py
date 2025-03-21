@@ -165,8 +165,8 @@ async def start(request: StartRequest):
 
         browser, context = await setup_browser(session_id)
         agent = await setup_agent(browser, context, task)
-        history = await agent.run()
-        return {"status": "success", "message": "Browser started successfully", "session_id": session_id, "history": history}
+        result = await agent.run()
+        return {"status": "success", "message": "Browser started successfully", "session_id": session_id, "result": result}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
