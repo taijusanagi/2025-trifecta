@@ -1,4 +1,5 @@
 import os
+import json
 
 from typing import Optional
 from dotenv import load_dotenv
@@ -23,11 +24,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-class StartRequest(BaseModel):
-    session_id: str
-    task: str
-    anchor_session_id: Optional[str] = None
 
 controller = Controller()
 
@@ -154,24 +150,39 @@ async def setup_agent(browser: Browser, context: UseBrowserContext, task: str) -
         use_vision=True, 
         controller=controller
     )
+class ChatRequest(BaseModel):
+    text: str
 
-@app.post("/start")
-async def start(request: StartRequest):
-    """API endpoint to start the browser with a user-defined session ID."""
+class ChatResponse(BaseModel):
+    text: str
+
+def to_serializable(obj):
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    elif isinstance(obj, list):
+        return [to_serializable(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: to_serializable(value) for key, value in obj.items()}
+    elif hasattr(obj, '__dict__'):
+        return {key: to_serializable(value) for key, value in vars(obj).items()}
+    else:
+        return str(obj)  # fallback for unknown types
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
     try:
-        session_id = request.session_id
-        task = request.task
-        anchor_session_id = request.anchor_session_id
-
-        if not session_id:
-            raise HTTPException(status_code=400, detail="session_id is required.")
-
+        data = json.loads(request.text)
+        session_id = data["session_id"]
+        task = data["task"]
+        anchor_session_id = data["anchor_session_id"]
         browser, context = await setup_browser(session_id, anchor_session_id)
         agent = await setup_agent(browser, context, task)
         result = await agent.run(max_steps=100)
-        return {"status": "success", "message": "Browser started successfully", "session_id": session_id, "result": result}
+        json_ready = to_serializable(result.model_outputs())
+        print(json_ready)
+        return ChatResponse(text=json.dumps(json_ready))
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
