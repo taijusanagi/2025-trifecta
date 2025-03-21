@@ -3,18 +3,27 @@ import requests
 
 from typing import Optional
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import uvicorn
 
 from browser_use import Agent, Browser, BrowserConfig
 from browser_use.browser.context import BrowserContext, BrowserContextConfig, BrowserSession
 from playwright.async_api import async_playwright, Page, BrowserContext as PlaywrightContext
 from langchain_openai import ChatOpenAI
 
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+
 load_dotenv()
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace with specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class StartRequest(BaseModel):
     session_id: str
@@ -137,7 +146,7 @@ async def setup_agent(browser: Browser, context: UseBrowserContext) -> Agent:
     """Set up the browser automation agent."""
     return Agent(
         task="Go to https://metamask.github.io/test-dapp/ and check the wallet connection",
-        llm=ChatOpenAI(model="gpt-4o"),
+        llm=ChatOpenAI(model="gpt-4o-mini"),
         browser=browser,
         browser_context=context,
         use_vision=True, 

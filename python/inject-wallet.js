@@ -8,6 +8,8 @@ console.log("🚀 Injecting Headless Web3 Provider...");
     try {
       const response = await fetch(`${relayerBaseUrl}/${sessionId}`);
       const data = await response.json();
+      console.log("fetchRelayerInfo:res", data.address);
+
       return { address: data.address, chainId: data.chainId };
     } catch (error) {
       console.error("Failed to fetch relayer info:", error);
@@ -209,6 +211,8 @@ console.log("🚀 Injecting Headless Web3 Provider...");
   }
 
   const { address, chainId } = await fetchRelayerInfo();
+
+  console.log("injected address", address);
 
   // Initialize the provider with configuration
   const { provider, providerInfo } = setupProviders({

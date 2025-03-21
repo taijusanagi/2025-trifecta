@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
     }
 
     const sessionId = uuidv4();
+    console.log("session created", sessionId);
     await kv.set(`${sessionId}:account`, JSON.stringify({ address, chainId }));
-
     return NextResponse.json({ sessionId });
   } catch (error) {
     console.error("Error creating session:", error);

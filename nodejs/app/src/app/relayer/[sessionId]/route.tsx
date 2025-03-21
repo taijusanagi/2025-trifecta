@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 
+import { Account } from "@/types/account";
+
 interface JsonRpcRequest {
   jsonrpc: string;
   id: number;
@@ -10,11 +12,10 @@ interface JsonRpcRequest {
 
 const getSessionAccount = async (sessionId: string) => {
   const sessionAccountData = await kv.get(`${sessionId}:account`);
-  if (!sessionAccountData || typeof sessionAccountData != "string") {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  if (!sessionAccountData) {
+    throw new Error("Session not found");
   }
-  const parsedSessionAccount = JSON.parse(sessionAccountData);
-  return parsedSessionAccount;
+  return sessionAccountData as Account;
 };
 
 export async function GET(
@@ -33,7 +34,7 @@ export async function POST(
   try {
     const { sessionId } = await params;
     const body: JsonRpcRequest = await req.json();
-    console.log(`Received request for session ${sessionId}:`, body);
+    // console.log(`Received request for session ${sessionId}:`, body);
 
     let result;
     switch (body.method) {
