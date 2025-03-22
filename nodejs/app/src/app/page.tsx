@@ -205,7 +205,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen px-6 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
+    <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
         <div className="text-2xl font-bold text-white tracking-wide">
           Glider
