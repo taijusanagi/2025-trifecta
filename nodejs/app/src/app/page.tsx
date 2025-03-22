@@ -22,9 +22,28 @@ export default function Home() {
   const { data: walletClient } = useWalletClient();
 
   const [sessionId, setSessionId] = useState("");
-  const [task, setTask] = useState(
-    "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail."
-  );
+
+  const taskExamples = [
+    {
+      title: "Launch Your NFT",
+      description:
+        "Create and launch your own NFT collection on Magic Eden effortlessly.",
+      task: "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail.",
+    },
+    {
+      title: "Discover Vitalik's Ethereum Address",
+      description:
+        "Instantly fetch Ethereum founder Vitalik Buterin's official wallet address.",
+      task: "Get Vitalik Buterin's Ethereum address",
+    },
+    {
+      title: "Interactive Course on Momentum",
+      description: "Manus develops engaging video presentations...",
+      task: "Create an interactive course on momentum for middle school students...",
+    },
+  ];
+
+  const [task, setTask] = useState(taskExamples[0].task);
 
   const [isPolling, setIsPolling] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -38,25 +57,6 @@ export default function Home() {
   >("idle");
   const [category, setCategory] = useState("Featured");
   const categories = ["Featured", "Community"];
-
-  const taskExamples = [
-    {
-      title: "Discover Vitalik's Ethereum Address 🚀",
-      description:
-        "Instantly fetch Ethereum founder Vitalik Buterin's official wallet address.",
-      task: "Get Vitalik Buterin's Ethereum address",
-    },
-    {
-      title: "Deeply Analyze Tesla Stocks",
-      description: "Manus delivers in-depth stock analysis...",
-      task: "Analyze Tesla stock performance over the last year...",
-    },
-    {
-      title: "Interactive Course on Momentum",
-      description: "Manus develops engaging video presentations...",
-      task: "Create an interactive course on momentum for middle school students...",
-    },
-  ];
 
   const [showReactFlow, setShowReactFlow] = useState(false);
 
@@ -280,6 +280,44 @@ export default function Home() {
           </div>
 
           {/* Featured examples section remains unchanged */}
+          <div className="mt-8 w-full text-left">
+            <div className="flex gap-3 mb-6">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    if (cat !== "Community") setCategory(cat);
+                  }}
+                  disabled={cat === "Community"}
+                  className={clsx(
+                    "px-5 py-2 rounded-full border transition font-semibold",
+                    cat === "Community"
+                      ? "text-gray-600 border-gray-700 cursor-not-allowed"
+                      : category === cat
+                      ? "bg-white text-black border-white"
+                      : "text-gray-400 border-gray-600 hover:border-white hover:text-white"
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {category === "Featured" &&
+                taskExamples.map((t, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setTask(t.task)}
+                    className="cursor-pointer bg-white/10 hover:bg-white/20 p-4 rounded-xl border border-white/20 transition shadow"
+                  >
+                    <h3 className="text-white font-semibold text-lg mb-2">
+                      {t.title}
+                    </h3>
+                    <p className="text-gray-300 text-sm">{t.description}</p>
+                  </div>
+                ))}
+            </div>
+          </div>
         </main>
       ) : (
         // === ACTIVE SESSION 3:7 SPLIT VIEW ===
@@ -288,14 +326,14 @@ export default function Home() {
           <div className="w-full lg:w-3/10 flex flex-col gap-6 h-full overflow-y-auto">
             <div className="flex flex-col gap-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg h-full overflow-y-auto">
               {/* === Header === */}
-              <h2 className="text-xl font-semibold text-white mb-2">
+              <h2 className="text-xl font-semibold text-white">
                 Glider Computer
               </h2>
 
               {/* === Session Status Box === */}
               <div
                 className={clsx(
-                  "mb-4 flex items-center justify-between text-sm px-3 py-2 rounded-md shadow border",
+                  "flex items-center justify-between text-sm px-3 py-2 rounded-md shadow border",
                   {
                     "bg-gray-700 text-gray-300 border-gray-600":
                       sessionStatus !== "active",
@@ -336,7 +374,7 @@ export default function Home() {
                   </button>
                 )}
               </div>
-              <ul className="space-y-3 pr-1 overflow-y-auto flex-1">
+              <ul className="space-y-3 pr-1 overflow-y-auto no-scrollbar flex-1">
                 {thinking.map((step, index) => {
                   const nonNullActions = Object.entries(
                     step.action?.[0] || {}
@@ -344,7 +382,7 @@ export default function Home() {
                   return (
                     <li
                       key={index}
-                      className="p-3 bg-white/10 rounded-md border border-white/20 text-sm"
+                      className="p-3 bg-white/10 rounded-md border border-white/20 text-sm break-all"
                     >
                       <p className="font-medium">Step {index + 1}</p>
                       <p className="text-gray-300">
