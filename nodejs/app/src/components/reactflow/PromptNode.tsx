@@ -1,17 +1,27 @@
 import { Handle, Position } from "reactflow";
 import clsx from "clsx";
+import { useEffect, useState } from "react";
 
 export default function PromptNode({ data }: any) {
+  const [opacity, setOpacity] = useState(1);
+
+  useEffect(() => {
+    if (!data.isRunning) return;
+    const interval = setInterval(() => {
+      setOpacity((prev) => (prev === 1 ? 0.6 : 1));
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [data.isRunning]);
+
   return (
     <div
-      className={clsx(
-        "relative px-4 py-2 rounded shadow border font-medium transition",
-        data.isRunning
-          ? "bg-white/20 border-white/40 text-white animate-pulse"
-          : "bg-white/10 border-white/20 text-white"
-      )}
+      className={
+        "relative px-4 py-2 rounded shadow border font-medium transition-all duration-500 ease-in-out bg-white/10 border-white/20 text-white"
+      }
+      style={{ opacity: data.isRunning ? opacity : 1 }}
     >
-      {data.label || "Prompt"}
+      {data.label || "Prompt Node"}
 
       <Handle
         type="target"

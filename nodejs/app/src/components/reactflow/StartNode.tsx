@@ -22,7 +22,7 @@ export default function StartNode({ data }: any) {
         )}
       </button>
 
-      <span>{data.label || "Start"}</span>
+      <span>{data.label || "Start Node"}</span>
 
       <Handle
         type="source"
