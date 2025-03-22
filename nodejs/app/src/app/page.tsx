@@ -207,8 +207,15 @@ export default function Home() {
   return (
     <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
-        <div className="text-2xl font-bold text-white tracking-wide">
-          Glider
+        <div className="flex items-center space-x-1">
+          <img
+            src="/logo_transparent.png"
+            alt="Glider Logo"
+            className="w-12 h-12"
+          />
+          <span className="text-3xl font-bold text-white tracking-wide hidden sm:inline">
+            Glider
+          </span>
         </div>
         <ConnectButton />
       </header>
@@ -241,7 +248,6 @@ export default function Home() {
           {/* === LEFT PANEL === */}
           <div className="w-full lg:w-3/10 flex flex-col gap-6">
             <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-5 shadow-lg">
-              <p className="text-white font-semibold mb-1">Goal</p>
               <Textarea
                 value={task}
                 disabled={true}
@@ -288,7 +294,7 @@ export default function Home() {
                 {sessionStatus === "active" && (
                   <button
                     onClick={handleStop}
-                    className="text-red-400 hover:text-red-500 transition"
+                    className="text-red-400 hover:text-red-500 transition cursor-pointer"
                     title="Stop Session"
                   >
                     <CircleOff className="w-5 h-5" />
