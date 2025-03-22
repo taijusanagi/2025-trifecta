@@ -229,7 +229,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
+    <div className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
         <div className="flex items-center space-x-1 z-60">
           <img
@@ -251,7 +251,7 @@ export default function Home() {
       {!isRunning ? (
         // ===== INITIAL CENTER VIEW =====
         <main className="flex flex-col items-center gap-6 w-full max-w-4xl mx-auto mt-20 text-center transition-all duration-700">
-          <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-6 shadow-lg w-full">
+          <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg w-full">
             <h1 className="text-3xl font-bold mb-2">Hello!!</h1>
             <p className="text-xl text-gray-400 mb-6">What can I do for you?</p>
 
