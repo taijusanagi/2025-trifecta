@@ -10,7 +10,7 @@ import { JsonRpcRequest } from "@/types/json-rpc-request";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const { sessionId } = await params;

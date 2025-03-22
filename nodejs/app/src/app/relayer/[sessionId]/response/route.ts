@@ -3,7 +3,7 @@ import { setSessionResponse } from "@/lib/relayer";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const { sessionId } = await params;
   const body = await req.json();
