@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAccount, useWalletClient } from "wagmi";
 import { JsonRpcRequest } from "@/types/json-rpc-request";
 import { hexToString } from "viem";
-import { CircleOff, Loader2, Workflow } from "lucide-react";
+import { CircleOff, Loader2, Workflow, X } from "lucide-react";
 import clsx from "clsx";
+import ReactFlow, { Background, Controls } from "reactflow";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -224,10 +225,12 @@ export default function Home() {
     setSessionStatus("idle");
   };
 
+  const [showReactFlow, setShowReactFlow] = useState(false);
+
   return (
     <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 z-20">
           <img
             src="/logo_transparent.png"
             alt="Glider Logo"
@@ -237,7 +240,9 @@ export default function Home() {
             Glider
           </span>
         </div>
-        <ConnectButton />
+        <div className="z-20">
+          <ConnectButton />
+        </div>
       </header>
 
       {!isRunning ? (
@@ -438,11 +443,31 @@ export default function Home() {
         </main>
       )}
       <div
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-white text-black rounded-full shadow-lg hover:bg-gray-200 flex items-center justify-center cursor-pointer"
-        onClick={() => alert("Workflow clicked!")}
+        className="fixed bottom-6 right-6 z-20 w-16 h-16 bg-white text-black rounded-full shadow-lg hover:bg-gray-200 flex items-center justify-center cursor-pointer"
+        onClick={() =>
+          !showReactFlow ? setShowReactFlow(true) : setShowReactFlow(false)
+        }
       >
-        <Workflow className="w-8 h-8" />
+        {!showReactFlow ? (
+          <Workflow className="w-8 h-8 cursor-pointer" />
+        ) : (
+          <X className="w-8 h-8 cursor-pointer" />
+        )}
       </div>
+      {showReactFlow && (
+        <div className="fixed inset-0 bg-black bg-opacity-80">
+          <ReactFlow
+            proOptions={{ hideAttribution: true }}
+            nodes={[]}
+            edges={[]}
+            fitView
+            className="w-full h-full"
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
+        </div>
+      )}
     </div>
   );
 }
