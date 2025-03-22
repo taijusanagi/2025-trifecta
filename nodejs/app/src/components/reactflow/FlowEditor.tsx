@@ -77,7 +77,7 @@ export default function FlowEditor() {
           id: newNodeId,
           type: "prompt",
           position,
-          data: { label: "Prompt" },
+          data: { label: "Prompt Node" },
           deletable: !isRunning,
         };
 
@@ -122,6 +122,7 @@ export default function FlowEditor() {
     );
 
     const runNode = async (id: string) => {
+      // Mark current node as running
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id
@@ -136,11 +137,12 @@ export default function FlowEditor() {
         )
       );
 
-      await new Promise((res) => setTimeout(res, 1000));
+      await new Promise((res) => setTimeout(res, 1000)); // Simulate processing delay
 
+      // Mark current node as done
       setNodes((nds) =>
         nds.map((node) =>
-          node.id === id
+          node.id === id && id !== "start"
             ? {
                 ...node,
                 data: {
@@ -164,13 +166,16 @@ export default function FlowEditor() {
 
     await runNode("start");
 
+    // 🧠 All nodes done — now set isRunning to false
+    setIsRunning(false);
+
+    // Make prompt nodes deletable again
     setNodes((nds) =>
       nds.map((n) => ({
         ...n,
         deletable: n.id !== "start",
       }))
     );
-    setIsRunning(false);
   };
 
   useEffect(() => {
@@ -182,12 +187,13 @@ export default function FlowEditor() {
               data: {
                 ...n.data,
                 onRun: runFlow,
+                isRunning, // ✅ inject global running status
               },
             }
           : n
       )
     );
-  }, [edges]);
+  }, [edges, isRunning]); // ✅ include isRunning as a dependency
 
   return (
     <ReactFlow
