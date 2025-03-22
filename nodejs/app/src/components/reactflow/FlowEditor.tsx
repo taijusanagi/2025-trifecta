@@ -49,9 +49,19 @@ export default function FlowEditor() {
 
       if (!type) return;
 
+      // Limit only one start node
       if (type === "start") {
         const hasStart = nodes.some((n) => n.type === "start");
-        if (hasStart) return; // Skip adding another
+        if (hasStart) return;
+      }
+
+      // Limit 5 prompt nodes max
+      if (type === "prompt") {
+        const promptCount = nodes.filter((n) => n.type === "prompt").length;
+        if (promptCount >= 5) {
+          alert("You can only add up to 5 prompt nodes.");
+          return;
+        }
       }
 
       const position = project({
