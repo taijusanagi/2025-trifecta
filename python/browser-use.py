@@ -1,6 +1,6 @@
 import os
 import json
-import requests
+import httpx
 
 from typing import Optional
 from dotenv import load_dotenv
@@ -148,13 +148,14 @@ async def setup_browser(session_id: str, anchor_session_id: Optional[str]) -> tu
     return await setup_local_browser(session_id)
 
 def create_step_callback(session_id: str):
-    def new_step_callback(state: BrowserState, model_output: AgentOutput, steps: int):
+    async def new_step_callback(state: BrowserState, model_output: AgentOutput, steps: int):
         log_entry = to_serializable(model_output)
         wallet_relayer_url = os.getenv('WALLET_RELAYER_URL')
-        requests.post(
-            f"{wallet_relayer_url}/{session_id}/log",
-            json=log_entry,
-        )
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{wallet_relayer_url}/{session_id}/log",
+                json=log_entry,
+            )
 
     return new_step_callback
 
@@ -162,7 +163,7 @@ async def setup_agent(browser: Browser, context: UseBrowserContext, task: str, s
     """Set up the browser automation agent."""
     return Agent(
         task=task,
-        llm=ChatOpenAI(model="gpt-4o-mini"),
+        llm=ChatOpenAI(model="gpt-4o"),
         browser=browser,
         browser_context=context,
         use_vision=True, 
