@@ -244,22 +244,14 @@ export default function Home() {
         </main>
       ) : (
         // ===== 3:7 SPLIT VIEW =====
-        <main className="flex flex-col lg:flex-row gap-6 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out">
+        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out">
           {/* === LEFT PANEL === */}
           <div className="w-full lg:w-3/10 flex flex-col gap-6">
             <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-5 shadow-lg">
-              <Textarea
-                value={task}
-                disabled={true}
-                onChange={(e) => setTask(e.target.value)}
-                placeholder="Enter a goal for the session"
-                className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
-              />
-
               {/* === Session Status Box === */}
               <div
                 className={clsx(
-                  "mt-4 flex items-center justify-between text-sm px-3 py-2 rounded-md shadow border",
+                  "mb-4 flex items-center justify-between text-sm px-3 py-2 rounded-md shadow border",
                   {
                     "bg-gray-700 text-gray-300 border-gray-600":
                       sessionStatus !== "active",
@@ -301,6 +293,13 @@ export default function Home() {
                   </button>
                 )}
               </div>
+              <Textarea
+                value={task}
+                disabled={true}
+                onChange={(e) => setTask(e.target.value)}
+                placeholder="Enter a goal for the session"
+                className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
+              />
             </div>
 
             {/* === HISTORY === */}
