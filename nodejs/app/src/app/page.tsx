@@ -7,8 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAccount, useWalletClient } from "wagmi";
 import { JsonRpcRequest } from "@/types/json-rpc-request";
 import { hexToString } from "viem";
-import { CircleOff, Loader2 } from "lucide-react";
+import { CircleOff, Loader2, Workflow, X } from "lucide-react";
 import clsx from "clsx";
+import { ReactFlowProvider } from "reactflow";
+import FlowEditor from "@/components/reactflow/FlowEditor";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -55,6 +57,8 @@ export default function Home() {
       task: "Create an interactive course on momentum for middle school students...",
     },
   ];
+
+  const [showReactFlow, setShowReactFlow] = useState(false);
 
   const handleWalletRequest = useCallback(
     async (request: JsonRpcRequest) => {
@@ -227,17 +231,21 @@ export default function Home() {
   return (
     <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 z-60">
           <img
             src="/logo_transparent.png"
             alt="Glider Logo"
             className="w-12 h-12"
           />
-          <span className="text-3xl font-bold text-white tracking-wide hidden sm:inline">
+          <span className="text-3xl font-bold text-white tracking-wide">
             Glider
           </span>
         </div>
-        <ConnectButton />
+        <ConnectButton
+          chainStatus="none"
+          showBalance={false}
+          accountStatus="address"
+        />
       </header>
 
       {!isRunning ? (
@@ -256,7 +264,7 @@ export default function Home() {
 
             <Button
               onClick={handleStart}
-              className="mt-4 w-full bg-white/80 text-black hover:bg-white"
+              className="mt-4 w-full bg-white/80 text-black hover:bg-white cursor-pointer"
             >
               Start
             </Button>
@@ -437,6 +445,34 @@ export default function Home() {
           </div>
         </main>
       )}
+      <div
+        className="fixed bottom-6 right-6 z-20 w-16 h-16 bg-white text-black rounded-full shadow-lg hover:bg-gray-200 flex items-center justify-center cursor-pointer z-40"
+        onClick={() =>
+          !showReactFlow ? setShowReactFlow(true) : setShowReactFlow(false)
+        }
+      >
+        {!showReactFlow ? (
+          <Workflow className="w-8 h-8 cursor-pointer" />
+        ) : (
+          <X className="w-8 h-8 cursor-pointer>" />
+        )}
+      </div>
+      <div
+        className={clsx(
+          "fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm transition-opacity duration-700",
+          showReactFlow
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        )}
+      >
+        <div className="relative w-full h-full">
+          <ReactFlowProvider>
+            <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
+              <FlowEditor />
+            </div>
+          </ReactFlowProvider>
+        </div>
+      </div>
     </div>
   );
 }

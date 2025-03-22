@@ -1,4 +1,5 @@
 import "@rainbow-me/rainbowkit/styles.css";
+import "reactflow/dist/style.css";
 import "./globals.css";
 
 import type { Metadata } from "next";
