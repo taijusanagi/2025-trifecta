@@ -230,7 +230,7 @@ export default function Home() {
   return (
     <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
-        <div className="flex items-center space-x-1 z-20">
+        <div className="flex items-center space-x-1 z-60">
           <img
             src="/logo_transparent.png"
             alt="Glider Logo"
@@ -240,9 +240,8 @@ export default function Home() {
             Glider
           </span>
         </div>
-        <div className="z-20">
-          <ConnectButton />
-        </div>
+
+        <ConnectButton />
       </header>
 
       {!isRunning ? (
@@ -444,28 +443,40 @@ export default function Home() {
       )}
       <div
         className="fixed bottom-6 right-6 z-20 w-16 h-16 bg-white text-black rounded-full shadow-lg hover:bg-gray-200 flex items-center justify-center cursor-pointer"
-        onClick={() =>
-          !showReactFlow ? setShowReactFlow(true) : setShowReactFlow(false)
-        }
+        onClick={() => setShowReactFlow(true)}
       >
-        {!showReactFlow ? (
-          <Workflow className="w-8 h-8 cursor-pointer" />
-        ) : (
-          <X className="w-8 h-8 cursor-pointer" />
-        )}
+        <Workflow className="w-8 h-8 cursor-pointer" />
       </div>
       {showReactFlow && (
-        <div className="fixed inset-0 bg-black bg-opacity-80">
-          <ReactFlow
-            proOptions={{ hideAttribution: true }}
-            nodes={[]}
-            edges={[]}
-            fitView
-            className="w-full h-full"
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div
+            className={clsx(
+              "relative w-full h-full transition-transform duration-500 ease-out",
+              showReactFlow ? "translate-x-0" : "translate-x-full"
+            )}
           >
-            <Background />
-            <Controls />
-          </ReactFlow>
+            <button
+              onClick={() => setShowReactFlow(false)}
+              className="absolute top-4 right-4 z-50 text-white hover:text-gray-300 transition cursor-pointer"
+              title="Close Flow"
+            >
+              <X className="w-8 h-8 cursor-pointer" />
+            </button>
+
+            {/* React Flow Panel */}
+            <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
+              <ReactFlow
+                proOptions={{ hideAttribution: true }}
+                nodes={[]}
+                edges={[]}
+                fitView
+                className="w-full h-full"
+              >
+                <Background />
+                <Controls />
+              </ReactFlow>
+            </div>
+          </div>
         </div>
       )}
     </div>
