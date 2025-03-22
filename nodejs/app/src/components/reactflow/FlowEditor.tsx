@@ -122,7 +122,7 @@ export default function FlowEditor() {
     );
 
     const runNode = async (id: string) => {
-      // Mark current node as running
+      // Mark node as running
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id
@@ -137,9 +137,9 @@ export default function FlowEditor() {
         )
       );
 
-      await new Promise((res) => setTimeout(res, 1000)); // Simulate processing delay
+      await new Promise((res) => setTimeout(res, 1000));
 
-      // Mark current node as done
+      // Mark as done (skip Start node if needed)
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id && id !== "start"
@@ -157,11 +157,11 @@ export default function FlowEditor() {
       visited.add(id);
 
       const nextEdges = edges.filter((e) => e.source === id);
-      for (const edge of nextEdges) {
-        if (!visited.has(edge.target)) {
-          await runNode(edge.target);
-        }
-      }
+      await Promise.all(
+        nextEdges
+          .filter((edge) => !visited.has(edge.target))
+          .map((edge) => runNode(edge.target))
+      );
     };
 
     await runNode("start");
