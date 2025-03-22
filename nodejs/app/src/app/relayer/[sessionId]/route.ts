@@ -3,7 +3,6 @@ import {
   getSessionAccount,
   setSessionRequest,
   waitForSessionResponse,
-  deleteSessionRequest,
   deleteSessionResponse,
 } from "@/lib/relayer";
 import { JsonRpcRequest } from "@/types/json-rpc-request";
