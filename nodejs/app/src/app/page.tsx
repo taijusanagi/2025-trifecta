@@ -457,23 +457,22 @@ export default function Home() {
           <X className="w-8 h-8 cursor-pointer>" />
         )}
       </div>
-      {showReactFlow && (
-        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div
-            className={clsx(
-              "relative w-full h-full transition-transform duration-500 ease-out",
-              showReactFlow ? "translate-x-0" : "translate-x-full"
-            )}
-          >
-            <ReactFlowProvider>
-              {/* React Flow Panel */}
-              <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
-                <FlowEditor />
-              </div>
-            </ReactFlowProvider>
-          </div>
+      <div
+        className={clsx(
+          "fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm transition-opacity duration-700",
+          showReactFlow
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        )}
+      >
+        <div className="relative w-full h-full">
+          <ReactFlowProvider>
+            <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
+              <FlowEditor />
+            </div>
+          </ReactFlowProvider>
         </div>
-      )}
+      </div>
     </div>
   );
 }
