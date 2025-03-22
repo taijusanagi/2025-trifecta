@@ -9,7 +9,8 @@ import { JsonRpcRequest } from "@/types/json-rpc-request";
 import { hexToString } from "viem";
 import { CircleOff, Loader2, Workflow, X } from "lucide-react";
 import clsx from "clsx";
-import ReactFlow, { Background, Controls } from "reactflow";
+import { ReactFlowProvider } from "reactflow";
+import FlowEditor from "@/components/FlowEditor";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -56,6 +57,8 @@ export default function Home() {
       task: "Create an interactive course on momentum for middle school students...",
     },
   ];
+
+  const [showReactFlow, setShowReactFlow] = useState(false);
 
   const handleWalletRequest = useCallback(
     async (request: JsonRpcRequest) => {
@@ -225,8 +228,6 @@ export default function Home() {
     setSessionStatus("idle");
   };
 
-  const [showReactFlow, setShowReactFlow] = useState(false);
-
   return (
     <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
@@ -236,12 +237,15 @@ export default function Home() {
             alt="Glider Logo"
             className="w-12 h-12"
           />
-          <span className="text-3xl font-bold text-white tracking-wide hidden sm:inline">
+          <span className="text-3xl font-bold text-white tracking-wide">
             Glider
           </span>
         </div>
-
-        <ConnectButton />
+        <ConnectButton
+          chainStatus="none"
+          showBalance={false}
+          accountStatus="address"
+        />
       </header>
 
       {!isRunning ? (
@@ -442,40 +446,49 @@ export default function Home() {
         </main>
       )}
       <div
-        className="fixed bottom-6 right-6 z-20 w-16 h-16 bg-white text-black rounded-full shadow-lg hover:bg-gray-200 flex items-center justify-center cursor-pointer"
-        onClick={() => setShowReactFlow(true)}
+        className="fixed bottom-6 right-6 z-20 w-16 h-16 bg-white text-black rounded-full shadow-lg hover:bg-gray-200 flex items-center justify-center cursor-pointer z-40"
+        onClick={() =>
+          !showReactFlow ? setShowReactFlow(true) : setShowReactFlow(false)
+        }
       >
-        <Workflow className="w-8 h-8 cursor-pointer" />
+        {!showReactFlow ? (
+          <Workflow className="w-8 h-8 cursor-pointer" />
+        ) : (
+          <X className="w-8 h-8 cursor-pointer>" />
+        )}
       </div>
       {showReactFlow && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div
             className={clsx(
               "relative w-full h-full transition-transform duration-500 ease-out",
               showReactFlow ? "translate-x-0" : "translate-x-full"
             )}
           >
-            <button
-              onClick={() => setShowReactFlow(false)}
-              className="absolute top-4 right-4 z-50 text-white hover:text-gray-300 transition cursor-pointer"
-              title="Close Flow"
-            >
-              <X className="w-8 h-8 cursor-pointer" />
-            </button>
+            <ReactFlowProvider>
+              {/* ✅ Draggable Prompt Box */}
+              <div className="absolute top-7 right-6 z-50">
+                <div
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData(
+                      "application/reactflow",
+                      "default"
+                    );
+                    event.dataTransfer.setData("text/prompt", "New Prompt");
+                    event.dataTransfer.effectAllowed = "move";
+                  }}
+                  draggable
+                  className="px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium cursor-move shadow"
+                >
+                  + Prompt Node
+                </div>
+              </div>
 
-            {/* React Flow Panel */}
-            <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
-              <ReactFlow
-                proOptions={{ hideAttribution: true }}
-                nodes={[]}
-                edges={[]}
-                fitView
-                className="w-full h-full"
-              >
-                <Background />
-                <Controls />
-              </ReactFlow>
-            </div>
+              {/* React Flow Panel */}
+              <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
+                <FlowEditor />
+              </div>
+            </ReactFlowProvider>
           </div>
         </div>
       )}
