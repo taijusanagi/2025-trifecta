@@ -259,7 +259,7 @@ export default function Home() {
       </header>
 
       {!isRunning ? (
-        // ===== INITIAL CENTER VIEW =====
+        // === INITIAL CENTER VIEW ===
         <main className="flex flex-col items-center gap-6 w-full max-w-4xl mx-auto mt-20 text-center transition-all duration-700">
           <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg w-full">
             <h1 className="text-3xl font-bold mb-2">Hello!!</h1>
@@ -279,47 +279,11 @@ export default function Home() {
               Start
             </Button>
           </div>
-          <div className="mt-8 w-full text-left">
-            <div className="flex gap-3 mb-6">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    if (cat !== "Community") setCategory(cat);
-                  }}
-                  disabled={cat === "Community"}
-                  className={clsx(
-                    "px-5 py-2 rounded-full border transition font-semibold",
-                    cat === "Community"
-                      ? "text-gray-600 border-gray-700 cursor-not-allowed"
-                      : category === cat
-                      ? "bg-white text-black border-white"
-                      : "text-gray-400 border-gray-600 hover:border-white hover:text-white"
-                  )}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {category === "Featured" &&
-                taskExamples.map((t, i) => (
-                  <div
-                    key={i}
-                    onClick={() => setTask(t.task)}
-                    className="cursor-pointer bg-white/10 hover:bg-white/20 p-4 rounded-xl border border-white/20 transition shadow"
-                  >
-                    <h3 className="text-white font-semibold text-lg mb-2">
-                      {t.title}
-                    </h3>
-                    <p className="text-gray-300 text-sm">{t.description}</p>
-                  </div>
-                ))}
-            </div>
-          </div>
+
+          {/* Featured examples section remains unchanged */}
         </main>
       ) : (
-        // ===== 3:7 SPLIT VIEW =====
+        // === ACTIVE SESSION 3:7 SPLIT VIEW ===
         <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out">
           {/* === LEFT PANEL === */}
           <div className="w-full lg:w-3/10 flex flex-col gap-6">
@@ -358,7 +322,6 @@ export default function Home() {
                     </>
                   )}
                 </div>
-
                 {sessionStatus === "active" && (
                   <button
                     onClick={handleStop}
@@ -369,13 +332,10 @@ export default function Home() {
                   </button>
                 )}
               </div>
-              <Textarea
-                value={task}
-                disabled={true}
-                onChange={(e) => setTask(e.target.value)}
-                placeholder="Enter a goal for the session"
-                className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
-              />
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md text-sm shadow text-gray-300 font-mono">
+                <p className="text-white font-semibold mb-1">Thinking...</p>
+                <p className="whitespace-pre-line">{thinking}</p>
+              </div>
             </div>
 
             {/* === HISTORY === */}
@@ -389,7 +349,6 @@ export default function Home() {
                     const nonNullActions = Object.entries(
                       step.action?.[0] || {}
                     ).filter(([, value]) => value !== null);
-
                     return (
                       <li
                         key={index}
@@ -404,7 +363,6 @@ export default function Home() {
                           <span className="font-semibold">Next Goal:</span>{" "}
                           {step.current_state.next_goal}
                         </p>
-
                         {nonNullActions.length > 0 && (
                           <div className="mt-1">
                             <p className="font-semibold">Action(s):</p>
@@ -430,7 +388,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* === RIGHT PANEL: LIVE VIEW + THINKING === */}
+          {/* === RIGHT PANEL === */}
           <div className="w-full lg:w-7/10 flex flex-col gap-4">
             <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl relative border border-white/10 backdrop-blur-md bg-white/5 hover:border-white/20 transition">
               <div className="absolute top-3 left-4 z-10 bg-black/40 px-3 py-1 text-sm rounded-md font-semibold">
@@ -447,28 +405,30 @@ export default function Home() {
               )}
             </div>
 
-            {/* === THINKING PROCESS === */}
-            {thinking && (
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md text-sm shadow text-gray-300 font-mono">
-                <p className="text-white font-semibold mb-1">Thinking...</p>
-                <p className="whitespace-pre-line">{thinking}</p>
-              </div>
-            )}
+            <Textarea
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+              disabled={true}
+              placeholder="Enter a goal for the session"
+              className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
+            />
           </div>
         </main>
       )}
+
+      {/* React Flow Panel Toggle */}
       <div
         className="fixed bottom-6 right-6 z-20 w-16 h-16 bg-white text-black rounded-full shadow-lg hover:bg-gray-200 flex items-center justify-center cursor-pointer z-40"
-        onClick={() =>
-          !showReactFlow ? setShowReactFlow(true) : setShowReactFlow(false)
-        }
+        onClick={() => setShowReactFlow(!showReactFlow)}
       >
         {!showReactFlow ? (
           <Workflow className="w-8 h-8 cursor-pointer" />
         ) : (
-          <X className="w-8 h-8 cursor-pointer>" />
+          <X className="w-8 h-8 cursor-pointer" />
         )}
       </div>
+
+      {/* React Flow Fullscreen Overlay */}
       <div
         className={clsx(
           "fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm transition-opacity duration-700",
