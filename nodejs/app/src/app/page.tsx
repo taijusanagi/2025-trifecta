@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAccount, useWalletClient } from "wagmi";
 import { JsonRpcRequest } from "@/types/json-rpc-request";
 import { hexToString } from "viem";
-import { CircleOff, Loader2 } from "lucide-react";
+import { CircleOff, Loader2, Workflow } from "lucide-react";
 import clsx from "clsx";
 
 export default function Home() {
@@ -256,7 +256,7 @@ export default function Home() {
 
             <Button
               onClick={handleStart}
-              className="mt-4 w-full bg-white/80 text-black hover:bg-white"
+              className="mt-4 w-full bg-white/80 text-black hover:bg-white cursor-pointer"
             >
               Start
             </Button>
@@ -437,6 +437,12 @@ export default function Home() {
           </div>
         </main>
       )}
+      <div
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-white text-black rounded-full shadow-lg hover:bg-gray-200 flex items-center justify-center cursor-pointer"
+        onClick={() => alert("Workflow clicked!")}
+      >
+        <Workflow className="w-8 h-8" />
+      </div>
     </div>
   );
 }
