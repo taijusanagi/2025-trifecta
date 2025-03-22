@@ -35,6 +35,26 @@ export default function Home() {
   const [sessionStatus, setSessionStatus] = useState<
     "idle" | "creating" | "active"
   >("idle");
+  const [category, setCategory] = useState("Featured");
+  const categories = ["Featured", "Community"];
+
+  const taskExamples = [
+    {
+      title: "Trip to Japan in April",
+      description: "Manus integrates comprehensive travel information...",
+      task: "Plan a trip to Japan in April. Include Tokyo, Kyoto, and Osaka...",
+    },
+    {
+      title: "Deeply Analyze Tesla Stocks",
+      description: "Manus delivers in-depth stock analysis...",
+      task: "Analyze Tesla stock performance over the last year...",
+    },
+    {
+      title: "Interactive Course on Momentum",
+      description: "Manus develops engaging video presentations...",
+      task: "Create an interactive course on momentum for middle school students...",
+    },
+  ];
 
   const handleWalletRequest = useCallback(
     async (request: JsonRpcRequest) => {
@@ -222,7 +242,7 @@ export default function Home() {
 
       {!isRunning ? (
         // ===== INITIAL CENTER VIEW =====
-        <main className="flex flex-col items-center gap-6 w-full max-w-2xl mx-auto mt-20 text-center transition-all duration-700">
+        <main className="flex flex-col items-center gap-6 w-full max-w-4xl mx-auto mt-20 text-center transition-all duration-700">
           <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-6 shadow-lg w-full">
             <h1 className="text-3xl font-bold mb-2">Hello!!</h1>
             <p className="text-xl text-gray-400 mb-6">What can I do for you?</p>
@@ -240,6 +260,44 @@ export default function Home() {
             >
               Start
             </Button>
+          </div>
+          <div className="mt-8 w-full text-left">
+            <div className="flex gap-3 mb-6">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    if (cat !== "Community") setCategory(cat);
+                  }}
+                  disabled={cat === "Community"}
+                  className={clsx(
+                    "px-5 py-2 rounded-full border transition font-semibold",
+                    cat === "Community"
+                      ? "text-gray-600 border-gray-700 cursor-not-allowed"
+                      : category === cat
+                      ? "bg-white text-black border-white"
+                      : "text-gray-400 border-gray-600 hover:border-white hover:text-white"
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {category === "Featured" &&
+                taskExamples.map((t, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setTask(t.task)}
+                    className="cursor-pointer bg-white/10 hover:bg-white/20 p-4 rounded-xl border border-white/20 transition shadow"
+                  >
+                    <h3 className="text-white font-semibold text-lg mb-2">
+                      {t.title}
+                    </h3>
+                    <p className="text-gray-300 text-sm">{t.description}</p>
+                  </div>
+                ))}
+            </div>
           </div>
         </main>
       ) : (
