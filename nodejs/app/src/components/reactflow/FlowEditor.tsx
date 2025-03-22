@@ -59,6 +59,13 @@ export default function FlowEditor() {
         target?.classList.contains("react-flow__pane") &&
         connectingNodeId.current
       ) {
+        const promptCount = nodes.filter((n) => n.type === "prompt").length;
+
+        if (promptCount >= 5) {
+          connectingNodeId.current = null;
+          return;
+        }
+
         const position = project({
           x: (event as MouseEvent).clientX - reactFlowBounds.left,
           y: (event as MouseEvent).clientY - reactFlowBounds.top,
@@ -96,7 +103,7 @@ export default function FlowEditor() {
 
       connectingNodeId.current = null;
     },
-    [project, isRunning]
+    [project, isRunning, nodes]
   );
 
   const runFlow = async () => {

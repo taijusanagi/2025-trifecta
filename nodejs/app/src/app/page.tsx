@@ -466,21 +466,6 @@ export default function Home() {
             )}
           >
             <ReactFlowProvider>
-              {/* ✅ Draggable Prompt Box */}
-              <div className="absolute top-6 right-6 z-50 flex flex-col gap-2">
-                {/* Prompt Node */}
-                <div
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("application/reactflow", "prompt");
-                    e.dataTransfer.setData("text/prompt", "Prompt Node");
-                  }}
-                  className="px-3 py-2 bg-white/10 text-white border border-white/20 rounded-md shadow cursor-move"
-                >
-                  + Prompt
-                </div>
-              </div>
-
               {/* React Flow Panel */}
               <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
                 <FlowEditor />
