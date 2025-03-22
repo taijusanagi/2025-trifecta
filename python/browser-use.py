@@ -96,7 +96,7 @@ async def setup_local_browser(session_id: str) -> tuple[Browser, UseBrowserConte
     """Set up a local Playwright browser and ensure browser_use.Browser() uses it."""
     print("Using Local Playwright Browser")
     playwright = await async_playwright().start()
-    local_browser = await playwright.chromium.launch(headless=False)
+    local_browser = await playwright.chromium.launch(headless=True, args=["--no-sandbox"])
 
     browser = Browser()
     browser.playwright_browser = local_browser
@@ -170,12 +170,12 @@ def to_serializable(obj):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    browser = context = None
+    browser = None
+    context = None
+    task = None
+    session_id = None
+    anchor_session_id = None
     try:
-        # data = json.loads(request.text)
-        # session_id = data["session_id"]
-        # task = data["task"]
-        # anchor_session_id = data["anchor_session_id"]
         try:
             data = json.loads(request.text)
             task = data["task"]
@@ -184,12 +184,10 @@ async def chat(request: ChatRequest):
         except json.JSONDecodeError:
             task = request.text
             session_id = "default"
-            anchor_session_id = None
         browser, context = await setup_browser(session_id, anchor_session_id)
         agent = await setup_agent(browser, context, task)
         result = await agent.run(max_steps=100)
         json_ready = to_serializable(result.model_outputs())
-        print(json_ready)
         return ChatResponse(text=json.dumps(json_ready))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

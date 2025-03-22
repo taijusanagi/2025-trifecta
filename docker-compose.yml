@@ -1,17 +1,17 @@
 services:
-  # browser-use:
-  #   build:
-  #     context: ./python
-  #     dockerfile: Dockerfile
-  #   image: browser-use
-  #   ports:
-  #     - "8000:8000"
-  #   shm_size: "2gb"
-  #   working_dir: /app
-  #   volumes:
-  #     - ./python:/app
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
+  d-browser-use:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    image: d-browser-use
+    ports:
+      - "8000:8000"
+    shm_size: "2gb"
+    working_dir: /app
+    volumes:
+      - ./python:/app
+    environment:
+      - PYTHONUNBUFFERED=1
 
   redis:
     image: redis
