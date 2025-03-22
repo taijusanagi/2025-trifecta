@@ -10,7 +10,7 @@ import {
   Edge,
   Node,
 } from "reactflow";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import StartNode from "./StartNode";
 import PromptNode from "./PromptNode";
@@ -34,6 +34,7 @@ export default function FlowEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { project } = useReactFlow();
+  const [isRunning, setIsRunning] = useState(false);
 
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -42,6 +43,8 @@ export default function FlowEditor() {
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
+      if (isRunning) return; // Prevent drop while running
+
       event.preventDefault();
       const reactFlowBounds = event.currentTarget.getBoundingClientRect();
       const type = event.dataTransfer.getData("application/reactflow");
@@ -49,13 +52,11 @@ export default function FlowEditor() {
 
       if (!type) return;
 
-      // Limit only one start node
       if (type === "start") {
         const hasStart = nodes.some((n) => n.type === "start");
         if (hasStart) return;
       }
 
-      // Limit 5 prompt nodes max
       if (type === "prompt") {
         const promptCount = nodes.filter((n) => n.type === "prompt").length;
         if (promptCount >= 5) {
@@ -74,17 +75,75 @@ export default function FlowEditor() {
         type,
         position,
         data: { label },
+        deletable: !isRunning,
       };
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [project, nodes]
+    [project, nodes, isRunning]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
+
+  const runFlow = async () => {
+    setIsRunning(true);
+    const visited = new Set<string>();
+
+    setNodes((nds) => nds.map((n) => ({ ...n, deletable: false })));
+
+    const runNode = async (id: string) => {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === id
+            ? { ...node, data: { ...node.data, isRunning: true } }
+            : node
+        )
+      );
+
+      await new Promise((res) => setTimeout(res, 1000));
+
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === id
+            ? { ...node, data: { ...node.data, isRunning: false } }
+            : node
+        )
+      );
+
+      visited.add(id);
+
+      const nextEdges = edges.filter((e) => e.source === id);
+      for (const edge of nextEdges) {
+        if (!visited.has(edge.target)) {
+          await runNode(edge.target);
+        }
+      }
+    };
+
+    await runNode("start");
+
+    setNodes((nds) => nds.map((n) => ({ ...n, deletable: n.id !== "start" })));
+    setIsRunning(false);
+  };
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === "start"
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                onRun: runFlow,
+              },
+            }
+          : n
+      )
+    );
+  }, [edges]);
 
   return (
     <ReactFlow
