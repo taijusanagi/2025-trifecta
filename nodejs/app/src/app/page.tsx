@@ -25,7 +25,6 @@ export default function Home() {
   const [task, setTask] = useState(
     "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail."
   );
-  const [history, setHistory] = useState<any[]>([]);
 
   const [isPolling, setIsPolling] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -101,7 +100,6 @@ export default function Home() {
       const logRes = await fetch(`/relayer/${sessionId}/log`);
       if (logRes.ok) {
         const { logs } = await logRes.json();
-        console.log("logs", logs);
         setThinking(logs);
       }
 
@@ -211,10 +209,7 @@ export default function Home() {
       if (!startResponse.ok) {
         throw new Error("Failed to start browser-use.");
       }
-
-      const { text } = await startResponse.json();
-      const parsed = JSON.parse(text);
-      setHistory(parsed);
+      console.log("Done!!");
     } catch (error) {
       console.error(error);
     }
@@ -230,8 +225,7 @@ export default function Home() {
     setSessionId("");
     setLiveViewUrl("");
     setIsRunning(false);
-    setThinking("");
-    setHistory([]);
+    setThinking([]);
     setSessionStatus("idle");
   };
 
@@ -330,33 +324,8 @@ export default function Home() {
                 )}
               </div>
               {thinking.length > 0 && (
-                <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
-                  {thinking.map((log, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-white">
-                        AI
-                      </div>
-                      <div className="flex-1 p-3 rounded-xl bg-white/10 border border-white/20 shadow text-sm text-gray-100">
-                        <pre className="whitespace-pre-wrap break-words font-mono text-xs">
-                          {typeof log === "string"
-                            ? log
-                            : JSON.stringify(log, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* === HISTORY === */}
-            {history.length > 0 && (
-              <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg max-h-[360px] overflow-y-auto">
-                <h2 className="text-lg font-semibold mb-2">
-                  Execution History
-                </h2>
-                <ul className="space-y-3 pr-1">
-                  {history.map((step, index) => {
+                <ul className="space-y-3 pr-1 max-h-[360px] overflow-y-auto">
+                  {thinking.map((step, index) => {
                     const nonNullActions = Object.entries(
                       step.action?.[0] || {}
                     ).filter(([, value]) => value !== null);
@@ -395,8 +364,8 @@ export default function Home() {
                     );
                   })}
                 </ul>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* === RIGHT PANEL === */}
