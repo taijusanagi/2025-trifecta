@@ -241,18 +241,6 @@ export default function FlowEditor() {
         <Background />
         <Controls />
       </ReactFlow>
-
-      {/* 🔄 Reset Button */}
-      <button
-        onClick={() => {
-          localStorage.removeItem(STORAGE_KEY.NODES);
-          localStorage.removeItem(STORAGE_KEY.EDGES);
-          window.location.reload();
-        }}
-        className="absolute top-2 right-2 z-10 bg-white text-black px-4 py-2 rounded shadow"
-      >
-        Reset Flow
-      </button>
     </div>
   );
 }
