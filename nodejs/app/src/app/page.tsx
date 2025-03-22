@@ -287,6 +287,11 @@ export default function Home() {
           {/* === LEFT PANEL === */}
           <div className="w-full lg:w-3/10 flex flex-col gap-6 h-full">
             <div className="flex flex-col gap-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg h-full overflow-y-auto">
+              {/* === Header === */}
+              <h2 className="text-xl font-semibold text-white mb-2">
+                Glider Computer
+              </h2>
+
               {/* === Session Status Box === */}
               <div
                 className={clsx(
@@ -375,6 +380,7 @@ export default function Home() {
               </ul>
             </div>
           </div>
+
           {/* === RIGHT PANEL === */}
           <div className="w-full lg:w-7/10 flex flex-col gap-4">
             <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl relative border border-white/10 backdrop-blur-md bg-white/5 hover:border-white/20 transition">
