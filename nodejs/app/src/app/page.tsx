@@ -10,6 +10,8 @@ import { hexToString } from "viem";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
+  const BROWSER_USE_API_KEY = process.env.NEXT_PUBLIC_BROWSER_USE_API_KEY;
+
   const POLLING_INTERVAL = 5000;
 
   const { address, chain } = useAccount();
@@ -146,9 +148,17 @@ export default function Home() {
         anchorSessionId = id;
       }
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (BROWSER_USE_API_KEY) {
+        headers["Authorization"] = `Bearer ${BROWSER_USE_API_KEY}`;
+      }
+
       const startResponse = await fetch(`${BROWSER_USE_API_URL}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           text: JSON.stringify({
             session_id: sessionId,

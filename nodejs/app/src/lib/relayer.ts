@@ -69,7 +69,7 @@ export const deleteSessionResponse = async (sessionId: string) => {
 
 export const waitForSessionResponse = async (
   sessionId: string,
-  timeout = 30000,
+  timeout = 60000,
   interval = 1000
 ): Promise<any> => {
   const start = Date.now();
