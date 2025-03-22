@@ -61,7 +61,7 @@ export default function FlowEditor() {
       ) {
         const promptCount = nodes.filter((n) => n.type === "prompt").length;
 
-        if (promptCount >= 5) {
+        if (promptCount >= 3) {
           connectingNodeId.current = null;
           return;
         }
