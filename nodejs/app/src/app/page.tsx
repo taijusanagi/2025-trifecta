@@ -275,10 +275,10 @@ export default function Home() {
         </main>
       ) : (
         // === ACTIVE SESSION 3:7 SPLIT VIEW ===
-        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out">
+        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out h-[calc(100vh-120px)]">
           {/* === LEFT PANEL === */}
-          <div className="w-full lg:w-3/10 flex flex-col gap-6">
-            <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg">
+          <div className="w-full lg:w-3/10 flex flex-col gap-6 h-full">
+            <div className="flex flex-col gap-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg h-full overflow-y-auto">
               {/* === Session Status Box === */}
               <div
                 className={clsx(
@@ -367,7 +367,6 @@ export default function Home() {
               )}
             </div>
           </div>
-
           {/* === RIGHT PANEL === */}
           <div className="w-full lg:w-7/10 flex flex-col gap-4">
             <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl relative border border-white/10 backdrop-blur-md bg-white/5 hover:border-white/20 transition">
