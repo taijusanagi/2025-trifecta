@@ -9,8 +9,9 @@ import {
   Connection,
   Edge,
   Node,
+  OnConnectStartParams,
 } from "reactflow";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import StartNode from "./StartNode";
 import PromptNode from "./PromptNode";
@@ -36,57 +37,67 @@ export default function FlowEditor() {
   const { project } = useReactFlow();
   const [isRunning, setIsRunning] = useState(false);
 
+  const connectingNodeId = useRef<string | null>(null);
+
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
     []
   );
 
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      if (isRunning) return;
-
-      event.preventDefault();
-      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
-      const type = event.dataTransfer.getData("application/reactflow");
-      const label = event.dataTransfer.getData("text/prompt");
-
-      if (!type) return;
-
-      if (type === "start") {
-        const hasStart = nodes.some((n) => n.type === "start");
-        if (hasStart) return;
-      }
-
-      if (type === "prompt") {
-        const promptCount = nodes.filter((n) => n.type === "prompt").length;
-        if (promptCount >= 5) {
-          alert("You can only add up to 5 prompt nodes.");
-          return;
-        }
-      }
-
-      const position = project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      });
-
-      const newNode: Node = {
-        id: `${+new Date()}`,
-        type,
-        position,
-        data: { label },
-        deletable: !isRunning,
-      };
-
-      setNodes((nds) => nds.concat(newNode));
-    },
-    [project, nodes, isRunning]
-  );
-
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+  const onConnectStart = useCallback((_: any, params: OnConnectStartParams) => {
+    connectingNodeId.current = params.nodeId || null;
   }, []);
+
+  const onConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement;
+      const reactFlowBounds = (
+        document.querySelector(".react-flow") as HTMLDivElement
+      )?.getBoundingClientRect();
+
+      if (
+        target?.classList.contains("react-flow__pane") &&
+        connectingNodeId.current
+      ) {
+        const position = project({
+          x: (event as MouseEvent).clientX - reactFlowBounds.left,
+          y: (event as MouseEvent).clientY - reactFlowBounds.top,
+        });
+
+        const newNodeId = `${+new Date()}`;
+
+        const newNode: Node = {
+          id: newNodeId,
+          type: "prompt",
+          position,
+          data: { label: "Prompt" },
+          deletable: !isRunning,
+        };
+
+        setNodes((nds) => {
+          const updated = [...nds, newNode];
+
+          setEdges((eds) =>
+            addEdge(
+              {
+                id: `e${connectingNodeId.current}-${newNodeId}`,
+                source: connectingNodeId.current!,
+                sourceHandle: "right",
+                target: newNodeId,
+                targetHandle: "left",
+              },
+              eds
+            )
+          );
+
+          return updated;
+        });
+      }
+
+      connectingNodeId.current = null;
+    },
+    [project, isRunning]
+  );
 
   const runFlow = async () => {
     setIsRunning(true);
@@ -179,10 +190,10 @@ export default function FlowEditor() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
-      onDrop={onDrop}
-      onDragOver={onDragOver}
+      onConnectStart={onConnectStart}
+      onConnectEnd={onConnectEnd}
       fitView
-      className="w-full h-full"
+      className="react-flow w-full h-full"
       proOptions={{ hideAttribution: true }}
     >
       <Background />
