@@ -21,6 +21,11 @@ const nodeTypes = {
   prompt: PromptNode,
 };
 
+const STORAGE_KEY = {
+  NODES: "reactflow-nodes",
+  EDGES: "reactflow-edges",
+};
+
 export default function FlowEditor() {
   const initialNodes: Node[] = [
     {
@@ -32,8 +37,26 @@ export default function FlowEditor() {
     },
   ];
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const loadNodes = (): Node[] => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY.NODES);
+      return saved ? JSON.parse(saved) : initialNodes;
+    } catch {
+      return initialNodes;
+    }
+  };
+
+  const loadEdges = (): Edge[] => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY.EDGES);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(loadNodes());
+  const [edges, setEdges, onEdgesChange] = useEdgesState(loadEdges());
   const { project } = useReactFlow();
   const [isRunning, setIsRunning] = useState(false);
 
@@ -122,7 +145,6 @@ export default function FlowEditor() {
     );
 
     const runNode = async (id: string) => {
-      // Mark node as running
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id
@@ -139,7 +161,6 @@ export default function FlowEditor() {
 
       await new Promise((res) => setTimeout(res, 1000));
 
-      // Mark as done (skip Start node if needed)
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id && id !== "start"
@@ -166,10 +187,8 @@ export default function FlowEditor() {
 
     await runNode("start");
 
-    // 🧠 All nodes done — now set isRunning to false
     setIsRunning(false);
 
-    // Make prompt nodes deletable again
     setNodes((nds) =>
       nds.map((n) => ({
         ...n,
@@ -187,30 +206,53 @@ export default function FlowEditor() {
               data: {
                 ...n.data,
                 onRun: runFlow,
-                isRunning, // ✅ inject global running status
+                isRunning,
               },
             }
           : n
       )
     );
-  }, [edges, isRunning]); // ✅ include isRunning as a dependency
+  }, [edges, isRunning]);
+
+  // 🔁 Persist to localStorage when nodes or edges change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY.NODES, JSON.stringify(nodes));
+  }, [nodes]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY.EDGES, JSON.stringify(edges));
+  }, [edges]);
 
   return (
-    <ReactFlow
-      nodeTypes={nodeTypes}
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      onConnectStart={onConnectStart}
-      onConnectEnd={onConnectEnd}
-      fitView
-      className="react-flow w-full h-full"
-      proOptions={{ hideAttribution: true }}
-    >
-      <Background />
-      <Controls />
-    </ReactFlow>
+    <div className="w-full h-full relative">
+      <ReactFlow
+        nodeTypes={nodeTypes}
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
+        fitView
+        className="react-flow w-full h-full"
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background />
+        <Controls />
+      </ReactFlow>
+
+      {/* 🔄 Reset Button */}
+      <button
+        onClick={() => {
+          localStorage.removeItem(STORAGE_KEY.NODES);
+          localStorage.removeItem(STORAGE_KEY.EDGES);
+          window.location.reload();
+        }}
+        className="absolute top-2 right-2 z-10 bg-white text-black px-4 py-2 rounded shadow"
+      >
+        Reset Flow
+      </button>
+    </div>
   );
 }
