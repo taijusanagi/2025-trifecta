@@ -75,7 +75,7 @@ export const setSessionLog = async (sessionId: string, log: string) => {
 
 export const getSessionLog = async (sessionId: string): Promise<string[]> => {
   const logs = await redis.lRange(`${sessionId}:log`, 0, -1); // Retrieve all logs
-  if (!logs || logs.length === 0) {
+  if (!logs) {
     throw new Error("Session log not found");
   }
   return logs;

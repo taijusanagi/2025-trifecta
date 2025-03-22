@@ -32,7 +32,7 @@ export default function Home() {
   const isPollingRef = useRef(false);
 
   const [liveViewUrl, setLiveViewUrl] = useState("");
-  const [thinking, setThinking] = useState<string>("");
+  const [thinking, setThinking] = useState<any[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [sessionStatus, setSessionStatus] = useState<
     "idle" | "creating" | "active"
@@ -42,9 +42,10 @@ export default function Home() {
 
   const taskExamples = [
     {
-      title: "Trip to Japan in April",
-      description: "Manus integrates comprehensive travel information...",
-      task: "Plan a trip to Japan in April. Include Tokyo, Kyoto, and Osaka...",
+      title: "Discover Vitalik's Ethereum Address 🚀",
+      description:
+        "Instantly fetch Ethereum founder Vitalik Buterin's official wallet address.",
+      task: "Get Vitalik Buterin's Ethereum address",
     },
     {
       title: "Deeply Analyze Tesla Stocks",
@@ -101,10 +102,7 @@ export default function Home() {
       if (logRes.ok) {
         const { logs } = await logRes.json();
         console.log("logs", logs);
-        if (logs.length > 0) {
-          const latestLog = logs[logs.length - 1]; // Get the most recent log
-          setThinking(JSON.stringify(latestLog));
-        }
+        setThinking(logs);
       }
 
       const response = await fetch(`/relayer/${sessionId}/request`, {
@@ -149,7 +147,6 @@ export default function Home() {
 
     setIsRunning(true);
     setSessionStatus("creating");
-    setThinking("Analyzing the initial goal and loading environment...");
 
     try {
       console.log("Starting session...", { address, chainId: chain.id });
@@ -332,10 +329,24 @@ export default function Home() {
                   </button>
                 )}
               </div>
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md text-sm shadow text-gray-300 font-mono">
-                <p className="text-white font-semibold mb-1">Thinking...</p>
-                <p className="whitespace-pre-line">{thinking}</p>
-              </div>
+              {thinking.length > 0 && (
+                <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                  {thinking.map((log, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-white">
+                        AI
+                      </div>
+                      <div className="flex-1 p-3 rounded-xl bg-white/10 border border-white/20 shadow text-sm text-gray-100">
+                        <pre className="whitespace-pre-wrap break-words font-mono text-xs">
+                          {typeof log === "string"
+                            ? log
+                            : JSON.stringify(log, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* === HISTORY === */}
@@ -434,7 +445,7 @@ export default function Home() {
           "fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm transition-opacity duration-700",
           showReactFlow
             ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+            : "opacity-0 pointer-events-none z-[-1]"
         )}
       >
         <div className="relative w-full h-full">

@@ -153,8 +153,7 @@ def create_step_callback(session_id: str):
         wallet_relayer_url = os.getenv('WALLET_RELAYER_URL')
         requests.post(
             f"{wallet_relayer_url}/{session_id}/log",
-            data=json.dumps(log_entry),  # ✅ Convert to JSON string
-            headers={"Content-Type": "application/json"}  # ✅ Set header
+            json=log_entry,
         )
 
     return new_step_callback
