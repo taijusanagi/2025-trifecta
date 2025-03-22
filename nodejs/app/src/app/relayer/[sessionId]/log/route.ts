@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { setSessionLog, getSessionLog } from "@/lib/relayer";
 
+const defaultLog = {
+  current_state: {
+    evaluation_previous_goal: "Unknown - Browser connection is not established",
+    next_goal: "Connect browser",
+  },
+  action: [
+    {
+      connect: { type: "chlonium" },
+    },
+  ],
+};
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
@@ -23,7 +35,14 @@ export async function GET(
   const { sessionId } = await params;
 
   try {
-    const logs = await getSessionLog(sessionId);
+    let logs = await getSessionLog(sessionId);
+
+    if (!logs || logs.length === 0) {
+      // Automatically append default log if no logs exist
+      await setSessionLog(sessionId, JSON.stringify(defaultLog));
+      logs = [JSON.stringify(defaultLog)];
+    }
+
     return NextResponse.json({ logs: logs.map((log) => JSON.parse(log)) });
   } catch (error) {
     return NextResponse.json(

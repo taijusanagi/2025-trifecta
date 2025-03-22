@@ -229,6 +229,14 @@ export default function Home() {
     setSessionStatus("idle");
   };
 
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [thinking]);
+
   return (
     <div className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
@@ -323,48 +331,48 @@ export default function Home() {
                   </button>
                 )}
               </div>
-              {thinking.length > 0 && (
-                <ul className="space-y-3 pr-1 max-h-[360px] overflow-y-auto">
-                  {thinking.map((step, index) => {
-                    const nonNullActions = Object.entries(
-                      step.action?.[0] || {}
-                    ).filter(([, value]) => value !== null);
-                    return (
-                      <li
-                        key={index}
-                        className="p-3 bg-white/10 rounded-md border border-white/20 text-sm"
-                      >
-                        <p className="font-medium">Step {index + 1}</p>
-                        <p className="text-gray-300">
-                          <span className="font-semibold">Previous Goal:</span>{" "}
-                          {step.current_state.evaluation_previous_goal}
-                        </p>
-                        <p className="text-gray-300">
-                          <span className="font-semibold">Next Goal:</span>{" "}
-                          {step.current_state.next_goal}
-                        </p>
-                        {nonNullActions.length > 0 && (
-                          <div className="mt-1">
-                            <p className="font-semibold">Action(s):</p>
-                            <ul className="list-disc list-inside text-gray-200">
-                              {nonNullActions.map(([key, value], i) => (
-                                <li key={i}>
-                                  <span className="font-medium">{key}</span>:{" "}
-                                  <span className="text-sm">
-                                    {typeof value === "object"
-                                      ? JSON.stringify(value, null, 2)
-                                      : String(value)}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+              <ul className="space-y-3 pr-1 overflow-y-auto flex-1">
+                {thinking.map((step, index) => {
+                  const nonNullActions = Object.entries(
+                    step.action?.[0] || {}
+                  ).filter(([, value]) => value !== null);
+                  return (
+                    <li
+                      key={index}
+                      className="p-3 bg-white/10 rounded-md border border-white/20 text-sm"
+                    >
+                      <p className="font-medium">Step {index + 1}</p>
+                      <p className="text-gray-300">
+                        <span className="font-semibold">Previous Goal:</span>{" "}
+                        {step.current_state.evaluation_previous_goal}
+                      </p>
+                      <p className="text-gray-300">
+                        <span className="font-semibold">Next Goal:</span>{" "}
+                        {step.current_state.next_goal}
+                      </p>
+                      {nonNullActions.length > 0 && (
+                        <div className="mt-1">
+                          <p className="font-semibold">Action(s):</p>
+                          <ul className="list-disc list-inside text-gray-200">
+                            {nonNullActions.map(([key, value], i) => (
+                              <li key={i}>
+                                <span className="font-medium">{key}</span>:{" "}
+                                <span className="text-sm">
+                                  {typeof value === "object"
+                                    ? JSON.stringify(value, null, 2)
+                                    : String(value)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+                {/* Invisible element to scroll to */}
+                <div ref={logsEndRef} />
+              </ul>
             </div>
           </div>
           {/* === RIGHT PANEL === */}
