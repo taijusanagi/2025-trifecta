@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAccount, useWalletClient } from "wagmi";
 import { JsonRpcRequest } from "@/types/json-rpc-request";
 import { hexToString } from "viem";
+import { CircleOff, Loader2 } from "lucide-react";
+import clsx from "clsx";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -17,7 +19,6 @@ export default function Home() {
   const { address, chain } = useAccount();
   const { data: walletClient } = useWalletClient();
 
-  const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [task, setTask] = useState(
     "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail."
@@ -29,6 +30,11 @@ export default function Home() {
   const isPollingRef = useRef(false);
 
   const [liveViewUrl, setLiveViewUrl] = useState("");
+  const [thinking, setThinking] = useState<string>("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [sessionStatus, setSessionStatus] = useState<
+    "idle" | "creating" | "active"
+  >("idle");
 
   const handleWalletRequest = useCallback(
     async (request: JsonRpcRequest) => {
@@ -107,7 +113,9 @@ export default function Home() {
       throw new Error("Please connect your wallet first.");
     }
 
-    setLoading(true);
+    setIsRunning(true);
+    setSessionStatus("creating");
+    setThinking("Analyzing the initial goal and loading environment...");
 
     try {
       console.log("Starting session...", { address, chainId: chain.id });
@@ -125,6 +133,7 @@ export default function Home() {
       console.log("Starting session done!");
       console.log("sessionId", sessionId);
       setSessionId(sessionId);
+      setSessionStatus("active");
       setIsPolling(true);
 
       let anchorSessionId = "";
@@ -177,8 +186,6 @@ export default function Home() {
       setHistory(parsed);
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -188,100 +195,185 @@ export default function Home() {
     }
   }, [sessionId, isPolling, pollForRequests]);
 
+  const handleStop = () => {
+    setSessionId("");
+    setLiveViewUrl("");
+    setIsRunning(false);
+    setThinking("");
+    setHistory([]);
+    setSessionStatus("idle");
+  };
+
   return (
-    <div className="p-6">
-      <header className="mb-4">
+    <div className="min-h-screen px-6 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
+      <header className="mb-6 flex justify-between items-center">
+        <div className="text-2xl font-bold text-white tracking-wide">
+          Glider
+        </div>
         <ConnectButton />
       </header>
-      <main className="flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
-        <Textarea
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-          placeholder="Enter a task for the session"
-          className="w-full min-h-[100px]"
-        />
 
-        {!sessionId && (
-          <Button onClick={handleStart} disabled={loading}>
-            {loading ? "Starting..." : "Start"}
-          </Button>
-        )}
+      {!isRunning ? (
+        // ===== INITIAL CENTER VIEW =====
+        <main className="flex flex-col items-center gap-6 w-full max-w-2xl mx-auto mt-20 text-center transition-all duration-700">
+          <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-6 shadow-lg w-full">
+            <h1 className="text-3xl font-bold mb-2">Hello!!</h1>
+            <p className="text-xl text-gray-400 mb-6">What can I do for you?</p>
 
-        {liveViewUrl && (
-          <div className="mt-6 w-full">
-            <h2 className="text-lg font-semibold mb-2">Live View</h2>
-            <div className="aspect-video w-full border rounded-md overflow-hidden">
+            <Textarea
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+              placeholder="Enter a goal for the session"
+              className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
+            />
+
+            <Button
+              onClick={handleStart}
+              className="mt-4 w-full bg-white/80 text-black hover:bg-white"
+            >
+              Start
+            </Button>
+          </div>
+        </main>
+      ) : (
+        // ===== 3:7 SPLIT VIEW =====
+        <main className="flex flex-col lg:flex-row gap-6 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out">
+          {/* === LEFT PANEL === */}
+          <div className="w-full lg:w-3/10 flex flex-col gap-6">
+            <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-5 shadow-lg">
+              <p className="text-white font-semibold mb-1">Goal</p>
+              <Textarea
+                value={task}
+                disabled={true}
+                onChange={(e) => setTask(e.target.value)}
+                placeholder="Enter a goal for the session"
+                className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
+              />
+
+              {/* === Session Status Box === */}
+              <div
+                className={clsx(
+                  "mt-4 flex items-center justify-between text-sm px-3 py-2 rounded-md shadow border",
+                  {
+                    "bg-gray-700 text-gray-300 border-gray-600":
+                      sessionStatus !== "active",
+                    "bg-green-500/20 text-green-300 border-green-600":
+                      sessionStatus === "active",
+                  }
+                )}
+              >
+                <div>
+                  {sessionStatus === "creating" && (
+                    <span className="inline-flex items-center gap-2 font-semibold">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Creating Session
+                    </span>
+                  )}
+                  {sessionStatus === "active" && (
+                    <>
+                      ● <span className="font-semibold">Session Active</span>
+                      <div className="mt-1 font-mono text-xs">{sessionId}</div>
+                    </>
+                  )}
+                  {sessionStatus === "idle" && (
+                    <>
+                      ●{" "}
+                      <span className="font-semibold text-gray-300">
+                        Session Inactive
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {sessionStatus === "active" && (
+                  <button
+                    onClick={handleStop}
+                    className="text-red-400 hover:text-red-500 transition"
+                    title="Stop Session"
+                  >
+                    <CircleOff className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* === HISTORY === */}
+            {history.length > 0 && (
+              <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-5 shadow-lg max-h-[360px] overflow-y-auto">
+                <h2 className="text-lg font-semibold mb-2">
+                  Execution History
+                </h2>
+                <ul className="space-y-3 pr-1">
+                  {history.map((step, index) => {
+                    const nonNullActions = Object.entries(
+                      step.action?.[0] || {}
+                    ).filter(([, value]) => value !== null);
+
+                    return (
+                      <li
+                        key={index}
+                        className="p-3 bg-white/10 rounded-md border border-white/20 text-sm"
+                      >
+                        <p className="font-medium">Step {index + 1}</p>
+                        <p className="text-gray-300">
+                          <span className="font-semibold">Previous Goal:</span>{" "}
+                          {step.current_state.evaluation_previous_goal}
+                        </p>
+                        <p className="text-gray-300">
+                          <span className="font-semibold">Next Goal:</span>{" "}
+                          {step.current_state.next_goal}
+                        </p>
+
+                        {nonNullActions.length > 0 && (
+                          <div className="mt-1">
+                            <p className="font-semibold">Action(s):</p>
+                            <ul className="list-disc list-inside text-gray-200">
+                              {nonNullActions.map(([key, value], i) => (
+                                <li key={i}>
+                                  <span className="font-medium">{key}</span>:{" "}
+                                  <span className="text-sm">
+                                    {typeof value === "object"
+                                      ? JSON.stringify(value, null, 2)
+                                      : String(value)}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* === RIGHT PANEL: LIVE VIEW + THINKING === */}
+          <div className="w-full lg:w-7/10 flex flex-col gap-4">
+            <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl relative border border-white/10 backdrop-blur-md bg-white/5 hover:border-white/20 transition">
+              <div className="absolute top-3 left-4 z-10 bg-black/40 px-3 py-1 text-sm rounded-md font-semibold">
+                Live View
+              </div>
               <iframe
-                src={liveViewUrl}
+                src={liveViewUrl ?? "about:blank"}
                 title="Live View"
-                className="w-full h-full"
+                className="w-full h-full rounded-md"
                 allow="clipboard-read; clipboard-write"
                 sandbox="allow-scripts allow-same-origin"
               />
             </div>
+
+            {/* === THINKING PROCESS === */}
+            {thinking && (
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md text-sm shadow text-gray-300 font-mono">
+                <p className="text-white font-semibold mb-1">Thinking...</p>
+                <p className="whitespace-pre-line">{thinking}</p>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Session Status */}
-        {sessionId && (
-          <div className="w-full p-3 bg-green-100 border border-green-300 rounded-md">
-            <p className="text-sm">
-              Session active: <span className="font-mono">{sessionId}</span>
-            </p>
-          </div>
-        )}
-
-        {/* History Display */}
-        {history.length > 0 && (
-          <div className="mt-6 w-full">
-            <h2 className="text-lg font-semibold mb-2">Execution History</h2>
-            <ul className="space-y-2">
-              {history.map((step, index) => {
-                const nonNullActions = Object.entries(
-                  step.action?.[0] || {}
-                ).filter(([, value]) => value !== null);
-
-                return (
-                  <li
-                    key={index}
-                    className="p-3 border rounded-md bg-gray-100 text-sm"
-                  >
-                    <p className="font-medium">Step {index + 1}</p>
-
-                    <p className="text-gray-700">
-                      <span className="font-semibold">Previous Goal:</span>{" "}
-                      {step.current_state.evaluation_previous_goal}
-                    </p>
-
-                    <p className="text-gray-700">
-                      <span className="font-semibold">Next Goal:</span>{" "}
-                      {step.current_state.next_goal}
-                    </p>
-
-                    {nonNullActions.length > 0 && (
-                      <div className="mt-2">
-                        <p className="font-semibold">Action(s):</p>
-                        <ul className="list-disc list-inside text-gray-800">
-                          {nonNullActions.map(([key, value], i) => (
-                            <li key={i}>
-                              <span className="font-medium">{key}</span>:{" "}
-                              <span className="text-sm">
-                                {typeof value === "object"
-                                  ? JSON.stringify(value, null, 2)
-                                  : String(value)}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-      </main>
+        </main>
+      )}
     </div>
   );
 }

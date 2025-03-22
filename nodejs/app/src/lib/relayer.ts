@@ -2,7 +2,9 @@ import { createClient } from "redis";
 import { Account } from "../types/account";
 import { JsonRpcRequest } from "../types/json-rpc-request";
 
-const redis = await createClient({ url: process.env.REDIS_URL }).connect();
+const redis = createClient(
+  process.env.REDIS_URL ? { url: process.env.REDIS_URL } : {}
+);
 
 if (!redis.isOpen) {
   await redis.connect();
