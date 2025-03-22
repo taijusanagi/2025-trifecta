@@ -313,7 +313,7 @@ export default function Home() {
         <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out">
           {/* === LEFT PANEL === */}
           <div className="w-full lg:w-3/10 flex flex-col gap-6">
-            <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-5 shadow-lg">
+            <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg">
               {/* === Session Status Box === */}
               <div
                 className={clsx(
@@ -370,7 +370,7 @@ export default function Home() {
 
             {/* === HISTORY === */}
             {history.length > 0 && (
-              <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-5 shadow-lg max-h-[360px] overflow-y-auto">
+              <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg max-h-[360px] overflow-y-auto">
                 <h2 className="text-lg font-semibold mb-2">
                   Execution History
                 </h2>
