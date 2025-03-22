@@ -12,8 +12,26 @@ import {
 } from "reactflow";
 import { useCallback } from "react";
 
+import StartNode from "./StartNode";
+import PromptNode from "./PromptNode";
+
+const nodeTypes = {
+  start: StartNode,
+  prompt: PromptNode,
+};
+
 export default function FlowEditor() {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const initialNodes: Node[] = [
+    {
+      id: "start",
+      type: "start",
+      position: { x: 100, y: 100 },
+      data: { label: "Start Node" },
+      deletable: false,
+    },
+  ];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { project } = useReactFlow();
 
@@ -31,6 +49,11 @@ export default function FlowEditor() {
 
       if (!type) return;
 
+      if (type === "start") {
+        const hasStart = nodes.some((n) => n.type === "start");
+        if (hasStart) return; // Skip adding another
+      }
+
       const position = project({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
@@ -45,7 +68,7 @@ export default function FlowEditor() {
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [project]
+    [project, nodes]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -55,6 +78,7 @@ export default function FlowEditor() {
 
   return (
     <ReactFlow
+      nodeTypes={nodeTypes}
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}

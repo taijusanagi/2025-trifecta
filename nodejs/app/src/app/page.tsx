@@ -10,7 +10,7 @@ import { hexToString } from "viem";
 import { CircleOff, Loader2, Workflow, X } from "lucide-react";
 import clsx from "clsx";
 import { ReactFlowProvider } from "reactflow";
-import FlowEditor from "@/components/FlowEditor";
+import FlowEditor from "@/components/reactflow/FlowEditor";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -467,20 +467,17 @@ export default function Home() {
           >
             <ReactFlowProvider>
               {/* ✅ Draggable Prompt Box */}
-              <div className="absolute top-7 right-6 z-50">
+              <div className="absolute top-6 right-6 z-50 flex flex-col gap-2">
+                {/* Prompt Node */}
                 <div
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData(
-                      "application/reactflow",
-                      "default"
-                    );
-                    event.dataTransfer.setData("text/prompt", "New Prompt");
-                    event.dataTransfer.effectAllowed = "move";
-                  }}
                   draggable
-                  className="px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium cursor-move shadow"
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/reactflow", "prompt");
+                    e.dataTransfer.setData("text/prompt", "Prompt Node");
+                  }}
+                  className="px-3 py-2 bg-white/10 text-white border border-white/20 rounded-md shadow cursor-move"
                 >
-                  + Prompt Node
+                  + Prompt
                 </div>
               </div>
 
