@@ -97,6 +97,16 @@ export default function Home() {
     isPollingRef.current = true;
 
     try {
+      const logRes = await fetch(`/relayer/${sessionId}/log`);
+      if (logRes.ok) {
+        const { logs } = await logRes.json();
+        console.log("logs", logs);
+        if (logs.length > 0) {
+          const latestLog = logs[logs.length - 1]; // Get the most recent log
+          setThinking(JSON.stringify(latestLog));
+        }
+      }
+
       const response = await fetch(`/relayer/${sessionId}/request`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -426,13 +436,15 @@ export default function Home() {
               <div className="absolute top-3 left-4 z-10 bg-black/40 px-3 py-1 text-sm rounded-md font-semibold">
                 Live View
               </div>
-              <iframe
-                src={liveViewUrl ?? "about:blank"}
-                title="Live View"
-                className="w-full h-full rounded-md"
-                allow="clipboard-read; clipboard-write"
-                sandbox="allow-scripts allow-same-origin"
-              />
+              {liveViewUrl && (
+                <iframe
+                  src={liveViewUrl ?? "about:blank"}
+                  title="Live View"
+                  className="w-full h-full rounded-md"
+                  allow="clipboard-read; clipboard-write"
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              )}
             </div>
 
             {/* === THINKING PROCESS === */}

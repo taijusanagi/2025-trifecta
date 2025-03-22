@@ -69,6 +69,18 @@ export const deleteSessionResponse = async (sessionId: string) => {
   }
 };
 
+export const setSessionLog = async (sessionId: string, log: string) => {
+  await redis.rPush(`${sessionId}:log`, log); // Append to list
+};
+
+export const getSessionLog = async (sessionId: string): Promise<string[]> => {
+  const logs = await redis.lRange(`${sessionId}:log`, 0, -1); // Retrieve all logs
+  if (!logs || logs.length === 0) {
+    throw new Error("Session log not found");
+  }
+  return logs;
+};
+
 export const waitForSessionResponse = async (
   sessionId: string,
   timeout = 60000,

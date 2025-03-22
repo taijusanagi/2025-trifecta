@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 
 from typing import Optional
 from dotenv import load_dotenv
@@ -7,12 +8,17 @@ from pydantic import BaseModel
 
 from browser_use import ActionResult, Agent, Browser, BrowserConfig, Controller
 from browser_use.browser.context import BrowserContext, BrowserContextConfig, BrowserSession
+from browser_use.browser.views import BrowserState
+from browser_use.agent.views import AgentOutput
 from playwright.async_api import async_playwright, Page, BrowserContext as PlaywrightContext
 from langchain_openai import ChatOpenAI
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+
+from lmnr import Laminar
+Laminar.initialize(project_api_key=os.getenv('LMNR_PROJECT_API_KEY'))
 
 load_dotenv()
 
@@ -40,6 +46,7 @@ async def enable_logging(browser: BrowserContext):
 @controller.registry.action("Add Magic Eden extra https header origin")
 async def configure_magic_eden_header(browser: BrowserContext):
     page = await browser.get_current_page()
+    print("url debug", page.url)
     await page.set_extra_http_headers({"Origin": "https://magiceden.io"})
     msg = f"🛠️  Configured Magic Eden header"
     return ActionResult(extracted_content=msg, include_in_memory=True)
@@ -140,15 +147,28 @@ async def setup_browser(session_id: str, anchor_session_id: Optional[str]) -> tu
 
     return await setup_local_browser(session_id)
 
-async def setup_agent(browser: Browser, context: UseBrowserContext, task: str) -> Agent:
+def create_step_callback(session_id: str):
+    def new_step_callback(state: BrowserState, model_output: AgentOutput, steps: int):
+        log_entry = to_serializable(model_output)
+        wallet_relayer_url = os.getenv('WALLET_RELAYER_URL')
+        requests.post(
+            f"{wallet_relayer_url}/{session_id}/log",
+            data=json.dumps(log_entry),  # ✅ Convert to JSON string
+            headers={"Content-Type": "application/json"}  # ✅ Set header
+        )
+
+    return new_step_callback
+
+async def setup_agent(browser: Browser, context: UseBrowserContext, task: str, session_id: str) -> Agent:
     """Set up the browser automation agent."""
     return Agent(
         task=task,
-        llm=ChatOpenAI(model="gpt-4o"),
+        llm=ChatOpenAI(model="gpt-4o-mini"),
         browser=browser,
         browser_context=context,
         use_vision=True, 
-        controller=controller
+        controller=controller,
+        register_new_step_callback=create_step_callback(session_id),
     )
 class ChatRequest(BaseModel):
     text: str
@@ -173,7 +193,7 @@ async def chat(request: ChatRequest):
     if request.text.strip().lower() == "aaa": # To deploy on Autonome
         return ChatResponse(text="aaa") 
     if request.text.strip().lower() == "version": # To deploy on Autonome
-        return ChatResponse(text="0.1.0") 
+        return ChatResponse(text="0.1.2") 
     browser = None
     context = None
     task = None
@@ -189,7 +209,7 @@ async def chat(request: ChatRequest):
             task = request.text
             session_id = "default"
         browser, context = await setup_browser(session_id, anchor_session_id)
-        agent = await setup_agent(browser, context, task)
+        agent = await setup_agent(browser, context, task, session_id)
         result = await agent.run(max_steps=20) # Limit to 20 steps to prevent long waits
         json_ready = to_serializable(result.model_outputs())
         return ChatResponse(text=json.dumps(json_ready))

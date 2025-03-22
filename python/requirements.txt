@@ -1,3 +1,4 @@
 browser-use>=0.1.40
 fastapi>=0.115.11
 uvicorn>=0.34.0
+lmnr[all]
