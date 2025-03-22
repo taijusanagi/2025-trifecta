@@ -8,8 +8,6 @@ export async function POST(
   const { sessionId } = await params;
   const body = await req.json();
   const { result } = body;
-  console.log("response...!!");
-  console.log(sessionId, result);
   await setSessionResponse(sessionId, result);
   return NextResponse.json({});
 }

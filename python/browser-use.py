@@ -170,6 +170,10 @@ def to_serializable(obj):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
+    if request.text.strip().lower() == "aaa": # To deploy on Autonome
+        return ChatResponse(text="aaa") 
+    if request.text.strip().lower() == "version": # To deploy on Autonome
+        return ChatResponse(text="0.1.0") 
     browser = None
     context = None
     task = None
@@ -178,15 +182,15 @@ async def chat(request: ChatRequest):
     try:
         try:
             data = json.loads(request.text)
-            task = data["task"]
-            session_id = data["session_id"]
-            anchor_session_id = data["anchor_session_id"]
+            task = data.get("task")
+            session_id = data.get("session_id")
+            anchor_session_id = data.get("anchor_session_id")
         except json.JSONDecodeError:
             task = request.text
             session_id = "default"
         browser, context = await setup_browser(session_id, anchor_session_id)
         agent = await setup_agent(browser, context, task)
-        result = await agent.run(max_steps=100)
+        result = await agent.run(max_steps=20) # Limit to 20 steps to prevent long waits
         json_ready = to_serializable(result.model_outputs())
         return ChatResponse(text=json.dumps(json_ready))
     except Exception as e:

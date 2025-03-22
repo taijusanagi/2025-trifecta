@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionRequest } from "@/lib/relayer";
+import { getSessionRequest, deleteSessionRequest } from "@/lib/relayer";
 
 export async function GET(
   _: NextRequest,
@@ -7,5 +7,8 @@ export async function GET(
 ) {
   const { sessionId } = await params;
   const data = await getSessionRequest(sessionId).catch(() => undefined);
+  if (data) {
+    deleteSessionRequest(sessionId);
+  }
   return NextResponse.json(data || {});
 }

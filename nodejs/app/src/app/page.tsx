@@ -79,6 +79,7 @@ export default function Home() {
           try {
             const { result } = await handleWalletRequest(request);
 
+            console.log("handleWalletRequest result", result);
             await fetch(`/relayer/${sessionId}/response`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -107,6 +108,7 @@ export default function Home() {
     setLoading(true);
 
     try {
+      console.log("Starting session...", { address, chainId: chain.id });
       const createSessionResponse = await fetch("/relayer/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,11 +120,14 @@ export default function Home() {
       }
 
       const { sessionId } = await createSessionResponse.json();
+      console.log("Starting session done!");
+      console.log("sessionId", sessionId);
       setSessionId(sessionId);
       setIsPolling(true);
 
       let anchorSessionId = "";
       if (process.env.NEXT_PUBLIC_IS_LOCAL_BROWSER !== "true") {
+        console.log("Starting anchorbrowser...");
         const anchorbrowserResponse = await fetch("/anchorbrowser", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -134,6 +139,9 @@ export default function Home() {
 
         const { id, live_view_url: liveViewUrl } =
           await anchorbrowserResponse.json();
+        console.log("Starting anchorbrowser done!");
+        console.log("anchorSessionId", id);
+        console.log("liveViewUrl", liveViewUrl);
         setLiveViewUrl(liveViewUrl);
         anchorSessionId = id;
       }

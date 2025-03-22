@@ -35,7 +35,6 @@ export async function POST(
       case "eth_sendTransaction":
         await setSessionRequest(sessionId, body);
         result = await waitForSessionResponse(sessionId);
-        deleteSessionRequest(sessionId);
         deleteSessionResponse(sessionId);
         break;
       default:
