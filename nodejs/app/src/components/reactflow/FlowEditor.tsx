@@ -43,7 +43,7 @@ export default function FlowEditor() {
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
-      if (isRunning) return; // Prevent drop while running
+      if (isRunning) return;
 
       event.preventDefault();
       const reactFlowBounds = event.currentTarget.getBoundingClientRect();
@@ -92,13 +92,28 @@ export default function FlowEditor() {
     setIsRunning(true);
     const visited = new Set<string>();
 
-    setNodes((nds) => nds.map((n) => ({ ...n, deletable: false })));
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        deletable: false,
+        data: {
+          ...n.data,
+          isRunning: false,
+        },
+      }))
+    );
 
     const runNode = async (id: string) => {
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id
-            ? { ...node, data: { ...node.data, isRunning: true } }
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  isRunning: true,
+                },
+              }
             : node
         )
       );
@@ -108,7 +123,13 @@ export default function FlowEditor() {
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id
-            ? { ...node, data: { ...node.data, isRunning: false } }
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  isRunning: false,
+                },
+              }
             : node
         )
       );
@@ -125,7 +146,12 @@ export default function FlowEditor() {
 
     await runNode("start");
 
-    setNodes((nds) => nds.map((n) => ({ ...n, deletable: n.id !== "start" })));
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        deletable: n.id !== "start",
+      }))
+    );
     setIsRunning(false);
   };
 
