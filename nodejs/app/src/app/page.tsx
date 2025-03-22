@@ -232,7 +232,7 @@ export default function Home() {
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (logsEndRef.current) {
+    if (window.innerWidth >= 768 && logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [thinking]);
@@ -283,9 +283,9 @@ export default function Home() {
         </main>
       ) : (
         // === ACTIVE SESSION 3:7 SPLIT VIEW ===
-        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out h-[calc(100vh-120px)]">
+        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out md:h-[calc(100vh-120px)]">
           {/* === LEFT PANEL === */}
-          <div className="w-full lg:w-3/10 flex flex-col gap-6 h-full">
+          <div className="w-full lg:w-3/10 flex flex-col gap-6 h-full overflow-y-auto">
             <div className="flex flex-col gap-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg h-full overflow-y-auto">
               {/* === Header === */}
               <h2 className="text-xl font-semibold text-white mb-2">
