@@ -104,6 +104,13 @@ export default function Home() {
         if (logRes.ok) {
           const { logs } = await logRes.json();
           setThinking(logs);
+          if (logs.length > 0) {
+            const latestLog = logs[logs.length - 1];
+            const done = latestLog.action.find((obj: any) => obj.done);
+            if (done) {
+              setSessionStatus("idle");
+            }
+          }
         }
 
         const response = await fetch(`/relayer/${sessionId}/request`, {
@@ -185,7 +192,7 @@ export default function Home() {
       anchorSessionId = id;
     }
 
-    console.log("Starting session...", { address, chainId });
+    console.log("Starting session...");
     const createSessionResponse = await fetch("/relayer/create-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -231,7 +238,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    console.log("useEffect: sessionId", sessionId);
     if (!sessionId) return;
 
     const fetchInfo = async () => {
@@ -241,7 +247,11 @@ export default function Home() {
         if (data.task) setTask(data.task);
         if (data.liveViewUrl) setLiveViewUrl(data.liveViewUrl);
         setIsRunning(true);
-        setSessionStatus("active");
+        if (data.success !== undefined) {
+          setSessionStatus("idle");
+        } else {
+          setSessionStatus("active");
+        }
         pollForRequests(sessionId);
       } catch (err) {
         console.error("Failed to fetch session info:", err);
@@ -400,6 +410,7 @@ export default function Home() {
                       <span className="font-semibold text-gray-300">
                         Session Inactive
                       </span>
+                      <div className="mt-1 font-mono text-xs">{sessionId}</div>
                     </>
                   )}
                 </div>
