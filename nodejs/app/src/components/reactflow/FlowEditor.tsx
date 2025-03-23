@@ -375,6 +375,7 @@ export default function FlowEditor({
   const handleClearFlow = () => {
     localStorage.removeItem(STORAGE_KEY.NODES);
     localStorage.removeItem(STORAGE_KEY.EDGES);
+    setIsRunning(false);
     const resetStartNode: Node = {
       id: "start",
       type: "start",
