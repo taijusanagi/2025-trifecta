@@ -36,7 +36,6 @@ export async function POST(
     const {
       done: { success },
     } = done;
-    console.log("Session done", success);
     const info = await getSessionInfo(sessionId);
     await setSessionInfo(sessionId, {
       ...info,

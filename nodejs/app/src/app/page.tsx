@@ -93,10 +93,11 @@ export default function Home() {
   );
 
   const pollForRequests = useCallback(
-    async (sessionId: string) => {
+    async (sessionId: string, sessionStatus: string) => {
       // Return early if conditions aren't met
       if (isPollingRef.current) return;
 
+      let updatedSessionStatus = "";
       isPollingRef.current = true;
 
       try {
@@ -108,33 +109,37 @@ export default function Home() {
             const latestLog = logs[logs.length - 1];
             const done = latestLog.action.find((obj: any) => obj.done);
             if (done) {
+              updatedSessionStatus = "idle";
               setSessionStatus("idle");
             }
           }
         }
 
-        const response = await fetch(`/relayer/${sessionId}/request`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+        updatedSessionStatus = updatedSessionStatus || sessionStatus;
+        if (updatedSessionStatus !== "idle") {
+          const response = await fetch(`/relayer/${sessionId}/request`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          });
 
-        if (response.ok) {
-          const data = await response.json();
+          if (response.ok) {
+            const data = await response.json();
 
-          if (data && data.id) {
-            const request: JsonRpcRequest = data;
+            if (data && data.id) {
+              const request: JsonRpcRequest = data;
 
-            try {
-              const { result } = await handleWalletRequest(request);
+              try {
+                const { result } = await handleWalletRequest(request);
 
-              console.log("handleWalletRequest result", result);
-              await fetch(`/relayer/${sessionId}/response`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ result }),
-              });
-            } catch (reqError) {
-              console.error("Error processing request:", reqError);
+                console.log("handleWalletRequest result", result);
+                await fetch(`/relayer/${sessionId}/response`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ result }),
+                });
+              } catch (reqError) {
+                console.error("Error processing request:", reqError);
+              }
             }
           }
         }
@@ -142,12 +147,13 @@ export default function Home() {
         console.error("Error in polling:", error);
       } finally {
         isPollingRef.current = false;
-
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(
-          () => pollForRequests(sessionId),
-          POLLING_INTERVAL
-        );
+        if (updatedSessionStatus !== "idle") {
+          timeoutRef.current = setTimeout(
+            () => pollForRequests(sessionId, updatedSessionStatus),
+            POLLING_INTERVAL
+          );
+        }
       }
     },
     [handleWalletRequest]
@@ -242,17 +248,19 @@ export default function Home() {
 
     const fetchInfo = async () => {
       try {
+        let currentSessionStatus = "";
         const res = await fetch(`/relayer/${sessionId}/info`);
         const data = await res.json();
         if (data.task) setTask(data.task);
         if (data.liveViewUrl) setLiveViewUrl(data.liveViewUrl);
         setIsRunning(true);
         if (data.success !== undefined) {
-          setSessionStatus("idle");
+          currentSessionStatus = "idle";
         } else {
-          setSessionStatus("active");
+          currentSessionStatus = "active";
         }
-        pollForRequests(sessionId);
+        setSessionStatus(currentSessionStatus as any);
+        pollForRequests(sessionId, currentSessionStatus);
       } catch (err) {
         console.error("Failed to fetch session info:", err);
       }
