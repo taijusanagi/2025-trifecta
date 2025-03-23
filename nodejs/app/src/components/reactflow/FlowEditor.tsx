@@ -201,6 +201,11 @@ export default function FlowEditor({
     });
   };
 
+  const nodesRef = useRef<Node[]>(nodes);
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
   const runFlow = async () => {
     setIsRunning(true);
     const visited = new Set<string>();
@@ -240,17 +245,10 @@ export default function FlowEditor({
           )
         );
 
-        const currentNode = (() => {
-          let latest: Node | undefined;
-          setNodes((nds) => {
-            latest = nds.find((n) => n.id === id);
-            return nds;
-          });
-          return latest;
-        })();
+        const currentNode = nodesRef.current.find((n) => n.id === id);
         const prompt = currentNode?.data?.prompt || "";
-
         if (currentNode?.type === "prompt") {
+          console.log("prompt:", prompt);
           const sessionId = await start(prompt);
           const infoRes = await fetch(`/relayer/${sessionId}/info`);
           const { liveViewUrl } = await infoRes.json();
