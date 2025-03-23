@@ -225,28 +225,7 @@ export default function FlowEditor({
     );
 
     const runNode = async (id: string) => {
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === id
-            ? {
-                ...node,
-                data: {
-                  ...node.data,
-                  isRunning: true,
-                },
-              }
-            : node
-        )
-      );
-
-      const currentNode = nodes.find((n) => n.id === id);
-      const prompt = currentNode?.data?.prompt || "";
-
-      if (currentNode?.type === "prompt") {
-        const sessionId = await start(prompt);
-        const infoRes = await fetch(`/relayer/${sessionId}/info`);
-        const { liveViewUrl } = await infoRes.json();
-
+      try {
         setNodes((nds) =>
           nds.map((node) =>
             node.id === id
@@ -254,30 +233,21 @@ export default function FlowEditor({
                   ...node,
                   data: {
                     ...node.data,
-                    sessionId,
-                    liveViewUrl,
+                    isRunning: true,
                   },
                 }
               : node
           )
         );
 
-        const maxAttempts = 1000;
-        const pollInterval = 1000;
-        let attempts = 0;
+        const currentNode = nodes.find((n) => n.id === id);
+        const prompt = currentNode?.data?.prompt || "";
 
-        const result: boolean | undefined = await new Promise((resolve) => {
-          const interval = setInterval(async () => {
-            const res = await pollForRequests(sessionId);
-            attempts++;
-            if (res !== undefined || attempts >= maxAttempts) {
-              clearInterval(interval);
-              resolve(res);
-            }
-          }, pollInterval);
-        });
+        if (currentNode?.type === "prompt") {
+          const sessionId = await start(prompt);
+          const infoRes = await fetch(`/relayer/${sessionId}/info`);
+          const { liveViewUrl } = await infoRes.json();
 
-        if (result !== undefined) {
           setNodes((nds) =>
             nds.map((node) =>
               node.id === id
@@ -285,55 +255,104 @@ export default function FlowEditor({
                     ...node,
                     data: {
                       ...node.data,
-                      result,
+                      sessionId,
+                      liveViewUrl,
                     },
                   }
                 : node
             )
           );
 
-          pollRecording(sessionId).then((videoUrl) => {
-            if (videoUrl) {
-              setNodes((nds) =>
-                nds.map((node) =>
-                  node.id === id
-                    ? {
-                        ...node,
-                        data: {
-                          ...node.data,
-                          videoUrl,
-                        },
-                      }
-                    : node
-                )
-              );
-            }
-          });
-        }
-      }
+          const maxAttempts = 1000;
+          const pollInterval = 1000;
+          let attempts = 0;
 
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === id && id !== "start"
-            ? {
-                ...node,
-                data: {
-                  ...node.data,
-                  isRunning: false,
-                },
+          const result: boolean | undefined = await new Promise((resolve) => {
+            const interval = setInterval(async () => {
+              const res = await pollForRequests(sessionId);
+              attempts++;
+              if (res !== undefined || attempts >= maxAttempts) {
+                clearInterval(interval);
+                resolve(res);
               }
-            : node
-        )
-      );
+            }, pollInterval);
+          });
 
-      visited.add(id);
+          if (result !== undefined) {
+            setNodes((nds) =>
+              nds.map((node) =>
+                node.id === id
+                  ? {
+                      ...node,
+                      data: {
+                        ...node.data,
+                        result,
+                      },
+                    }
+                  : node
+              )
+            );
 
-      const nextEdges = edges.filter((e) => e.source === id);
-      await Promise.all(
-        nextEdges
-          .filter((edge) => !visited.has(edge.target))
-          .map((edge) => runNode(edge.target))
-      );
+            pollRecording(sessionId).then((videoUrl) => {
+              if (videoUrl) {
+                setNodes((nds) =>
+                  nds.map((node) =>
+                    node.id === id
+                      ? {
+                          ...node,
+                          data: {
+                            ...node.data,
+                            videoUrl,
+                          },
+                        }
+                      : node
+                  )
+                );
+              }
+            });
+          }
+        }
+
+        setNodes((nds) =>
+          nds.map((node) =>
+            node.id === id && id !== "start"
+              ? {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    isRunning: false,
+                  },
+                }
+              : node
+          )
+        );
+
+        visited.add(id);
+
+        const nextEdges = edges.filter((e) => e.source === id);
+        await Promise.all(
+          nextEdges
+            .filter((edge) => !visited.has(edge.target))
+            .map((edge) => runNode(edge.target))
+        );
+      } catch (error) {
+        console.error(`Error running node ${id}:`, error);
+        setNodes((nds) =>
+          nds.map((node) =>
+            node.id === id
+              ? {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    isRunning: false,
+                    result: false,
+                    error: true,
+                  },
+                }
+              : node
+          )
+        );
+      }
     };
 
     await runNode("start");
