@@ -24,7 +24,7 @@ Glider can execute a wide range of crypto actions—from processing vague instru
 
 ![architecture](./nodejs/app/public/architecture.png)
 
-### 🔵 How the AI Agent Works
+### How the AI Agent Works
 
 #### 1. Request Handling
 
@@ -42,13 +42,7 @@ Glider can execute a wide range of crypto actions—from processing vague instru
 - Based on the analysis, the Agent generates an **action** (e.g., click, type, navigate).
 - This action is sent back to the headless browser via the `browser-use` control module.
 
-#### 4. Autonomous Control Loop
-
-- The Agent continuously loops through:  
-  `Analyze → Act → Observe`  
-  Enabling autonomous interaction with web interfaces.
-
-### 🟢 How the Headless Wallet Provider Works
+### How the Headless Wallet Provider Works
 
 #### 1. Web3 Injection
 
@@ -66,7 +60,7 @@ Glider can execute a wide range of crypto actions—from processing vague instru
 
 ---
 
-### 🟠 How Knowledge Storage Works
+### How Knowledge Storage Works
 
 #### 1. Knowledge Import/Export
 
