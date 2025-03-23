@@ -12,7 +12,7 @@ import {
   OnConnectStartParams,
 } from "reactflow";
 import { useCallback, useEffect, useRef, useState } from "react";
-
+import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 
 import StartNode from "./StartNode";
@@ -26,6 +26,10 @@ const nodeTypes = {
 const STORAGE_KEY = {
   NODES: "reactflow-nodes",
   EDGES: "reactflow-edges",
+};
+
+export type FlowEditorHandle = {
+  clearFlow: () => void;
 };
 
 export default function FlowEditor({
@@ -367,8 +371,33 @@ export default function FlowEditor({
     localStorage.setItem(STORAGE_KEY.EDGES, JSON.stringify(edges));
   }, [edges]);
 
+  const handleClearFlow = () => {
+    localStorage.removeItem(STORAGE_KEY.NODES);
+    localStorage.removeItem(STORAGE_KEY.EDGES);
+    const resetStartNode: Node = {
+      id: "start",
+      type: "start",
+      position: { x: 100, y: 100 },
+      data: {
+        label: "Start Node",
+        isRunning: false,
+      },
+      deletable: false,
+    };
+    setNodes([resetStartNode]);
+    setEdges([]);
+    setMenuPosition(null);
+  };
+
   return (
     <div className="w-full h-full relative">
+      <button
+        onClick={handleClearFlow}
+        className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full"
+        title="Clear Flow"
+      >
+        <Trash2 className="w-5 h-5 text-white" />
+      </button>
       <ReactFlow
         nodeTypes={nodeTypes}
         nodes={nodes}

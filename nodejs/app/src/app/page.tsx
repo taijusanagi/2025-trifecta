@@ -10,8 +10,11 @@ import { hexToString } from "viem";
 import { CircleOff, Loader2, Workflow, X } from "lucide-react";
 import clsx from "clsx";
 import { ReactFlowProvider } from "reactflow";
-import FlowEditor from "@/components/reactflow/FlowEditor";
+import FlowEditor, {
+  FlowEditorHandle,
+} from "@/components/reactflow/FlowEditor";
 import { ToastContainer, toast } from "react-toastify";
+import { Trash2 } from "lucide-react";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -389,6 +392,12 @@ export default function Home() {
       );
     }
     return <span className="text-sm text-gray-200">{String(value)}</span>;
+  };
+
+  const editorRef = useRef<FlowEditorHandle>(null);
+
+  const handleClear = () => {
+    editorRef.current?.clearFlow();
   };
 
   return (
