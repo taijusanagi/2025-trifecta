@@ -30,7 +30,7 @@ export default function Home() {
       const bucketManager = client.bucketManager();
       return { client, bucketManager };
     }
-  }, [chain]);
+  }, [chain, walletClient]);
 
   const [sessionId, setSessionId] = useState("");
 
@@ -42,15 +42,16 @@ export default function Home() {
       task: "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail.",
     },
     {
-      title: "Discover Vitalik's Ethereum Address",
+      title: "Get Latest ETH Price",
       description:
-        "Instantly fetch Ethereum founder Vitalik Buterin's official wallet address.",
-      task: "Get Vitalik Buterin's Ethereum address",
+        "Instantly fetch the current Ethereum (ETH) price in USD from a reliable source.",
+      task: "Visit https://coinmarketcap.com. Search for Ethereum. Locate the current ETH price in USD. Copy only the price number without the dollar sign or any other symbols. Example: if price is $3,200.45, copy '3200.45'.",
     },
     {
-      title: "Interactive Course on Momentum",
-      description: "Manus develops engaging video presentations...",
-      task: "Create an interactive course on momentum for middle school students...",
+      title: "Discover Vitalik's Ethereum Address",
+      description:
+        "Instantly fetch the official Ethereum wallet address of Vitalik Buterin, the co-founder of Ethereum.",
+      task: "Visit ENS app. In the search bar, type 'vitalik.eth' and press enter. Wait for the page to load. Copy the full Ethereum address shown on the page (a string starting with '0x').",
     },
   ];
 
@@ -350,11 +351,16 @@ export default function Home() {
   }, [sessionId, pollForRequests]);
 
   const handleStop = () => {
+    if (sessionId) {
+      setTimeout(() => setSpinning(false), 1000);
+    }
     setSessionId("");
     setLiveViewUrl("");
     setIsRunning(false);
     setThinking([]);
     setSessionStatus("idle");
+    setShowReactFlow(false);
+    setSpinning(true);
   };
 
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -409,14 +415,19 @@ export default function Home() {
     }
   }, []);
 
+  const [spinning, setSpinning] = useState(false);
+
   return (
     <div className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
-        <div className="flex items-center space-x-1 z-60">
+        <div
+          className="flex items-center space-x-1 z-60 cursor-pointer"
+          onClick={handleStop}
+        >
           <img
             src="/logo_transparent.png"
             alt="Glider Logo"
-            className="w-12 h-12"
+            className={`w-12 h-12 ${spinning ? "animate-spin" : ""}`}
           />
           <span className="text-3xl font-bold text-white tracking-wide">
             Glider
@@ -440,10 +451,18 @@ export default function Home() {
 
             <Textarea
               value={task}
-              onChange={(e) => setTask(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= 450) {
+                  setTask(value);
+                }
+              }}
               placeholder="Enter a goal for the session"
               className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
             />
+            <div className="text-right text-sm text-white/50 mt-1">
+              {task.length}/450 characters
+            </div>
             <Button
               onClick={!address || !chain?.id ? openConnectModal : handleStart}
               disabled={sessionStatus === "creating"}
@@ -802,7 +821,12 @@ export default function Home() {
                     setIsModalOpen(false);
                   } catch (err: any) {
                     console.error(err);
-                    toast.error("Upload failed: " + err?.message);
+                    toast.error(
+                      "Upload failed: " +
+                        (err?.message?.length > 40
+                          ? err.message.slice(0, 40) + "..."
+                          : err?.message)
+                    );
                   }
                 }}
               >
