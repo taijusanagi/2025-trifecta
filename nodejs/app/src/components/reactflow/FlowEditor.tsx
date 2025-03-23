@@ -78,6 +78,7 @@ export default function FlowEditor({
   );
 
   const connectingNodeId = useRef<string | null>(null);
+  const isConnecting = useRef(false); // Track connect mode
 
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -86,6 +87,7 @@ export default function FlowEditor({
 
   const onConnectStart = useCallback((_: any, params: OnConnectStartParams) => {
     connectingNodeId.current = params.nodeId || null;
+    isConnecting.current = true;
   }, []);
 
   const onConnectEnd = useCallback(
@@ -110,6 +112,7 @@ export default function FlowEditor({
             pauseOnHover: true,
           });
           connectingNodeId.current = null;
+          isConnecting.current = false;
           return;
         }
 
@@ -122,9 +125,20 @@ export default function FlowEditor({
       }
 
       connectingNodeId.current = null;
+
+      // Delay clearing connect mode so onPaneClick doesn’t close the menu immediately
+      setTimeout(() => {
+        isConnecting.current = false;
+      }, 0);
     },
     [project, nodes]
   );
+
+  const handlePaneClick = () => {
+    if (!isConnecting.current) {
+      setMenuPosition(null);
+    }
+  };
 
   const createNodeAtPosition = (
     type: string,
@@ -353,6 +367,8 @@ export default function FlowEditor({
         onConnect={onConnect}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
+        onPaneClick={handlePaneClick}
+        onNodeDragStart={() => setMenuPosition(null)}
         fitView
         className="react-flow w-full h-full"
         proOptions={{ hideAttribution: true }}
@@ -380,53 +396,42 @@ export default function FlowEditor({
             Custom Task Node
           </button>
 
+          {/* Other disabled options */}
           <button
-            className="w-full text-left px-4 py-2 text-white hover:bg-[#2A2A2A]"
+            className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
             disabled
           >
             Access Recall Network
           </button>
-
           <button
             className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
             disabled
           >
             Swap
           </button>
-
           <button
             className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
             disabled
           >
             Lending
           </button>
-
           <button
             className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
             disabled
           >
             Create NFT
           </button>
-
           <button
             className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
             disabled
           >
             Crosschain Bridge
           </button>
-
           <button
             className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
             disabled
           >
             Game
-          </button>
-
-          <button
-            className="w-full text-left px-4 py-2 text-red-500 hover:bg-[#2A2A2A] border-t border-gray-700"
-            onClick={() => setMenuPosition(null)}
-          >
-            Cancel
           </button>
         </div>
       )}
