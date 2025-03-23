@@ -17,8 +17,10 @@ import { toast } from "react-toastify";
 
 import StartNode from "./StartNode";
 import PromptNode from "./PromptNode";
-import { useAccount, useWalletClient } from "wagmi";
 import { RecallClient } from "@recallnet/sdk/client";
+
+import { createPublicClient, http } from "viem";
+import { testnet } from "@recallnet/chains";
 
 const nodeTypes = {
   start: StartNode,
@@ -388,15 +390,15 @@ export default function FlowEditor({
     setMenuPosition(null);
   };
 
-  const { chain } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const publicClient = createPublicClient({
+    chain: testnet,
+    transport: http(), // Uses the default RPC URL from the chain object
+  });
   const recall = useMemo(() => {
-    if (chain?.id === 2481632) {
-      const client = new RecallClient({ walletClient });
-      const bucketManager = client.bucketManager();
-      return { client, bucketManager };
-    }
-  }, [chain]);
+    const client = new RecallClient({ publicClient });
+    const bucketManager = client.bucketManager();
+    return { client, bucketManager };
+  }, []);
 
   const [isRecallModalOpen, setIsRecallModalOpen] = useState(false);
   const [bucketId, setBucketId] = useState("");
