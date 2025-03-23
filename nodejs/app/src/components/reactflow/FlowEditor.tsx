@@ -28,10 +28,6 @@ const STORAGE_KEY = {
   EDGES: "reactflow-edges",
 };
 
-export type FlowEditorHandle = {
-  clearFlow: () => void;
-};
-
 export default function FlowEditor({
   start,
   pollForRequests,
