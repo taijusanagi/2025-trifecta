@@ -210,7 +210,7 @@ async def chat(request: ChatRequest):
             session_id = "default"
         browser, context = await setup_browser(session_id, anchor_session_id)
         agent = await setup_agent(browser, context, task, session_id)
-        result = await agent.run(max_steps=20) # Limit to 20 steps to prevent long waits
+        result = await agent.run(max_steps=1) # Limit to 20 steps to prevent long waits
         json_ready = to_serializable(result.model_outputs())
         return ChatResponse(text=json.dumps(json_ready))
     except Exception as e:
