@@ -437,7 +437,7 @@ export default function FlowEditor({
             className="w-full text-left px-4 py-2 text-white hover:bg-[#2A2A2A]"
             disabled
           >
-            Access Recall Network
+            Access Recall Storage Network
           </button>
           <button
             className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
