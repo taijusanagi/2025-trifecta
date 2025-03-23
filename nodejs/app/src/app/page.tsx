@@ -105,7 +105,7 @@ export default function Home() {
         return response;
       } catch (error: any) {
         console.error("Error handling wallet request:", error);
-        return { error: error.message || "Unknown error" };
+        return { result: error.message || "Unknown error" };
       }
     },
     [walletClient]
