@@ -26,7 +26,11 @@ const STORAGE_KEY = {
   EDGES: "reactflow-edges",
 };
 
-export default function FlowEditor() {
+export default function FlowEditor({
+  start,
+}: {
+  start: (prompt: string) => Promise<string>;
+}) {
   const initialNodes: Node[] = [
     {
       id: "start",
@@ -167,7 +171,8 @@ export default function FlowEditor() {
       const prompt = currentNode?.data?.prompt || "";
 
       if (currentNode?.type === "prompt") {
-        console.log("process prompt:", prompt);
+        const sessionId = await start(prompt);
+        console.log("Session ID:", sessionId);
         await new Promise((res) => setTimeout(res, 5000));
       }
 

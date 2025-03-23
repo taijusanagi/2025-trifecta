@@ -92,53 +92,59 @@ export default function Home() {
     [walletClient]
   );
 
-  const pollForRequests = useCallback(async () => {
-    // Return early if conditions aren't met
-    if (!sessionId || isPollingRef.current) return;
+  const pollForRequests = useCallback(
+    async (sessionId: string) => {
+      // Return early if conditions aren't met
+      if (isPollingRef.current) return;
 
-    isPollingRef.current = true;
+      isPollingRef.current = true;
 
-    try {
-      const logRes = await fetch(`/relayer/${sessionId}/log`);
-      if (logRes.ok) {
-        const { logs } = await logRes.json();
-        setThinking(logs);
-      }
+      try {
+        const logRes = await fetch(`/relayer/${sessionId}/log`);
+        if (logRes.ok) {
+          const { logs } = await logRes.json();
+          setThinking(logs);
+        }
 
-      const response = await fetch(`/relayer/${sessionId}/request`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+        const response = await fetch(`/relayer/${sessionId}/request`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
 
-      if (response.ok) {
-        const data = await response.json();
+        if (response.ok) {
+          const data = await response.json();
 
-        if (data && data.id) {
-          const request: JsonRpcRequest = data;
+          if (data && data.id) {
+            const request: JsonRpcRequest = data;
 
-          try {
-            const { result } = await handleWalletRequest(request);
+            try {
+              const { result } = await handleWalletRequest(request);
 
-            console.log("handleWalletRequest result", result);
-            await fetch(`/relayer/${sessionId}/response`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ result }),
-            });
-          } catch (reqError) {
-            console.error("Error processing request:", reqError);
+              console.log("handleWalletRequest result", result);
+              await fetch(`/relayer/${sessionId}/response`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ result }),
+              });
+            } catch (reqError) {
+              console.error("Error processing request:", reqError);
+            }
           }
         }
-      }
-    } catch (error) {
-      console.error("Error in polling:", error);
-    } finally {
-      isPollingRef.current = false;
+      } catch (error) {
+        console.error("Error in polling:", error);
+      } finally {
+        isPollingRef.current = false;
 
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(pollForRequests, POLLING_INTERVAL);
-    }
-  }, [sessionId, handleWalletRequest]);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(
+          () => pollForRequests(sessionId),
+          POLLING_INTERVAL
+        );
+      }
+    },
+    [handleWalletRequest]
+  );
 
   const handleStart = async () => {
     if (!address || !chain?.id) {
@@ -236,7 +242,7 @@ export default function Home() {
         if (data.liveViewUrl) setLiveViewUrl(data.liveViewUrl);
         setIsRunning(true);
         setSessionStatus("active");
-        pollForRequests();
+        pollForRequests(sessionId);
       } catch (err) {
         console.error("Failed to fetch session info:", err);
       }
@@ -504,7 +510,9 @@ export default function Home() {
         <div className="relative w-full h-full">
           <ReactFlowProvider>
             <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
-              <FlowEditor start={() => start(address!, chain!.id, task)} />
+              <FlowEditor
+                start={(prompt) => start(address!, chain!.id, prompt)}
+              />
             </div>
           </ReactFlowProvider>
         </div>
