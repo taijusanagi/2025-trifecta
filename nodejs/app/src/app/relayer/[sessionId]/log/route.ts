@@ -3,12 +3,12 @@ import { setSessionLog, getSessionLog } from "@/lib/relayer";
 
 const defaultLog = {
   current_state: {
-    evaluation_previous_goal: "Unknown - Browser connection is not established",
+    evaluation_previous_goal: "Start wallet injected browser-use",
     next_goal: "Connect browser",
   },
   action: [
     {
-      connect: { type: "chlonium" },
+      connect: { type: "chromium" },
     },
   ],
 };
