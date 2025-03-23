@@ -346,7 +346,9 @@ export default function FlowEditor({
                     ...node.data,
                     isRunning: false,
                     result: false,
-                    error: true,
+                    sessionId: "",
+                    liveViewUrl: "",
+                    videoUrl: "",
                   },
                 }
               : node

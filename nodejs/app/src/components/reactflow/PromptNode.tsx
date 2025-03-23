@@ -72,7 +72,7 @@ export default function PromptNode({ data, id }: any) {
 
       {/* ✅ Conditional rendering area */}
       <div className="mb-2 w-full h-32 rounded border border-white/20 overflow-hidden flex items-center justify-center bg-black/10">
-        {hasFinished && !isVideoReady ? (
+        {hasFinished && data.result != false && !isVideoReady ? (
           // ⏳ Show loading while waiting for video
           <div className="flex items-center text-white/60">
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
