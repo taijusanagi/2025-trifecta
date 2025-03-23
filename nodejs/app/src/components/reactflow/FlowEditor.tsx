@@ -12,6 +12,8 @@ import {
   OnConnectStartParams,
 } from "reactflow";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Trash2 } from "lucide-react";
+import { toast } from "react-toastify";
 
 import StartNode from "./StartNode";
 import PromptNode from "./PromptNode";
@@ -67,8 +69,16 @@ export default function FlowEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState(loadEdges());
   const { project } = useReactFlow();
   const [isRunning, setIsRunning] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [pendingConnection, setPendingConnection] = useState<string | null>(
+    null
+  );
 
   const connectingNodeId = useRef<string | null>(null);
+  const isConnecting = useRef(false); // Track connect mode
 
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -77,6 +87,7 @@ export default function FlowEditor({
 
   const onConnectStart = useCallback((_: any, params: OnConnectStartParams) => {
     connectingNodeId.current = params.nodeId || null;
+    isConnecting.current = true;
   }, []);
 
   const onConnectEnd = useCallback(
@@ -93,64 +104,119 @@ export default function FlowEditor({
         const promptCount = nodes.filter((n) => n.type === "prompt").length;
 
         if (promptCount >= 3) {
+          toast.warn("You can only create up to 3 nodes for this hackathon.", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+          });
           connectingNodeId.current = null;
+          isConnecting.current = false;
           return;
         }
 
-        const position = project({
-          x: (event as MouseEvent).clientX - reactFlowBounds.left,
-          y: (event as MouseEvent).clientY - reactFlowBounds.top,
-        });
+        const rawX = (event as MouseEvent).clientX;
+        const rawY = (event as MouseEvent).clientY;
 
-        const newNodeId = `${+new Date()}`;
+        const menuWidth = 288; // w-72 = 18rem = 288px
+        const menuHeight = 350; // estimate, adjust if needed
 
-        const newNode: Node = {
-          id: newNodeId,
-          type: "prompt",
-          position,
-          data: { label: "Prompt Node" },
-          deletable: !isRunning,
-        };
+        const clampedX = Math.min(
+          Math.max(0, rawX),
+          window.innerWidth - menuWidth
+        );
+        const clampedY = Math.min(
+          Math.max(0, rawY),
+          window.innerHeight - menuHeight
+        );
 
-        setNodes((nds) => {
-          const updated = [...nds, newNode];
-
-          setEdges((eds) =>
-            addEdge(
-              {
-                id: `e${connectingNodeId.current}-${newNodeId}`,
-                source: connectingNodeId.current!,
-                sourceHandle: "right",
-                target: newNodeId,
-                targetHandle: "left",
-              },
-              eds
-            )
-          );
-
-          return updated;
-        });
+        setMenuPosition({ x: clampedX, y: clampedY });
+        setPendingConnection(connectingNodeId.current);
       }
 
       connectingNodeId.current = null;
+
+      // Delay clearing connect mode so onPaneClick doesn’t close the menu immediately
+      setTimeout(() => {
+        isConnecting.current = false;
+      }, 0);
     },
-    [project, isRunning, nodes]
+    [project, nodes]
   );
+
+  const handlePaneClick = () => {
+    if (!isConnecting.current) {
+      setMenuPosition(null);
+    }
+  };
+
+  const createNodeAtPosition = (
+    type: string,
+    screenPos: { x: number; y: number },
+    sourceId: string | null
+  ) => {
+    const reactFlowBounds = (
+      document.querySelector(".react-flow") as HTMLDivElement
+    )?.getBoundingClientRect();
+
+    const position = project({
+      x: screenPos.x - reactFlowBounds.left,
+      y: screenPos.y - reactFlowBounds.top,
+    });
+
+    const newNodeId = `${+new Date()}`;
+    const newNode: Node = {
+      id: newNodeId,
+      type,
+      position,
+      data: { label: `${type} node` },
+      deletable: !isRunning,
+    };
+
+    setNodes((nds) => {
+      const updated = [...nds, newNode];
+
+      if (sourceId) {
+        setEdges((eds) =>
+          addEdge(
+            {
+              id: `e${sourceId}-${newNodeId}`,
+              source: sourceId,
+              sourceHandle: "right",
+              target: newNodeId,
+              targetHandle: "left",
+            },
+            eds
+          )
+        );
+      }
+
+      return updated;
+    });
+  };
 
   const runFlow = async () => {
     setIsRunning(true);
     const visited = new Set<string>();
 
     setNodes((nds) =>
-      nds.map((n) => ({
-        ...n,
-        deletable: false,
-        data: {
-          ...n.data,
-          isRunning: false,
-          image: undefined, // 🧹 Reset image
-        },
-      }))
+      nds.map((n) =>
+        n.id === "start"
+          ? { ...n, deletable: false }
+          : {
+              ...n,
+              deletable: false,
+              data: {
+                ...n.data,
+                isRunning: false,
+                sessionId: "",
+                liveViewUrl: "",
+                videoUrl: "",
+                result: undefined,
+              },
+            }
+      )
     );
 
     const runNode = async (id: string) => {
@@ -172,16 +238,10 @@ export default function FlowEditor({
       const prompt = currentNode?.data?.prompt || "";
 
       if (currentNode?.type === "prompt") {
-        console.log("Task node prompt: ", prompt);
-
         const sessionId = await start(prompt);
-        console.log("Session ID:", sessionId);
-
-        // 👇 Fetch liveViewUrl after getting sessionId
         const infoRes = await fetch(`/relayer/${sessionId}/info`);
         const { liveViewUrl } = await infoRes.json();
 
-        // ✅ Pass sessionId and liveViewUrl early
         setNodes((nds) =>
           nds.map((node) =>
             node.id === id
@@ -205,7 +265,6 @@ export default function FlowEditor({
           const interval = setInterval(async () => {
             const res = await pollForRequests(sessionId);
             attempts++;
-
             if (res !== undefined || attempts >= maxAttempts) {
               clearInterval(interval);
               resolve(res);
@@ -214,7 +273,6 @@ export default function FlowEditor({
         });
 
         if (result !== undefined) {
-          // ✅ Pass result, sessionId, and liveViewUrl to node
           setNodes((nds) =>
             nds.map((node) =>
               node.id === id
@@ -274,7 +332,6 @@ export default function FlowEditor({
     };
 
     await runNode("start");
-
     setIsRunning(false);
 
     setNodes((nds) =>
@@ -302,7 +359,6 @@ export default function FlowEditor({
     );
   }, [edges, isRunning]);
 
-  // 🔁 Persist to localStorage when nodes or edges change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY.NODES, JSON.stringify(nodes));
   }, [nodes]);
@@ -311,8 +367,33 @@ export default function FlowEditor({
     localStorage.setItem(STORAGE_KEY.EDGES, JSON.stringify(edges));
   }, [edges]);
 
+  const handleClearFlow = () => {
+    localStorage.removeItem(STORAGE_KEY.NODES);
+    localStorage.removeItem(STORAGE_KEY.EDGES);
+    const resetStartNode: Node = {
+      id: "start",
+      type: "start",
+      position: { x: 100, y: 100 },
+      data: {
+        label: "Start Node",
+        isRunning: false,
+      },
+      deletable: false,
+    };
+    setNodes([resetStartNode]);
+    setEdges([]);
+    setMenuPosition(null);
+  };
+
   return (
     <div className="w-full h-full relative">
+      <button
+        onClick={handleClearFlow}
+        className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full"
+        title="Clear Flow"
+      >
+        <Trash2 className="w-5 h-5 text-white" />
+      </button>
       <ReactFlow
         nodeTypes={nodeTypes}
         nodes={nodes}
@@ -322,6 +403,8 @@ export default function FlowEditor({
         onConnect={onConnect}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
+        onPaneClick={handlePaneClick}
+        onNodeDragStart={() => setMenuPosition(null)}
         fitView
         className="react-flow w-full h-full"
         proOptions={{ hideAttribution: true }}
@@ -329,6 +412,65 @@ export default function FlowEditor({
         <Background />
         <Controls />
       </ReactFlow>
+
+      {menuPosition && (
+        <div
+          className="absolute bg-[#1E1E1E] border border-gray-700 rounded-lg shadow-lg z-10 w-72"
+          style={{ left: menuPosition.x, top: menuPosition.y }}
+        >
+          <div className="p-3 font-semibold text-white border-b border-gray-700">
+            Add Task Node
+          </div>
+
+          <button
+            className="w-full text-left px-4 py-2 text-white hover:bg-[#2A2A2A]"
+            onClick={() => {
+              createNodeAtPosition("prompt", menuPosition, pendingConnection);
+              setMenuPosition(null);
+            }}
+          >
+            Custom Task Node
+          </button>
+
+          {/* Other disabled options */}
+          <button
+            className="w-full text-left px-4 py-2 text-white hover:bg-[#2A2A2A]"
+            disabled
+          >
+            Access Recall Storage Network
+          </button>
+          <button
+            className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
+            disabled
+          >
+            Swap
+          </button>
+          <button
+            className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
+            disabled
+          >
+            Lending
+          </button>
+          <button
+            className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
+            disabled
+          >
+            Create NFT
+          </button>
+          <button
+            className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
+            disabled
+          >
+            Crosschain Bridge
+          </button>
+          <button
+            className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
+            disabled
+          >
+            Game
+          </button>
+        </div>
+      )}
     </div>
   );
 }

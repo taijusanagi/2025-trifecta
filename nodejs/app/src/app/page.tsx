@@ -484,10 +484,10 @@ export default function Home() {
         </main>
       ) : (
         // === ACTIVE SESSION 3:7 SPLIT VIEW ===
-        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out md:h-[calc(100vh-120px)]">
+        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out lg:h-[calc(100vh-120px)]">
           {/* === LEFT PANEL === */}
           <div className="w-full lg:w-3/10 flex flex-col gap-6 h-full overflow-y-auto">
-            <div className="flex flex-col gap-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg h-full overflow-y-auto">
+            <div className="flex flex-col gap-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg h-full">
               {/* === Header === */}
               <h2 className="text-xl font-semibold text-white">
                 Glider Computer
@@ -528,17 +528,10 @@ export default function Home() {
                     </>
                   )}
                 </div>
-                {sessionStatus === "active" && (
-                  <button
-                    onClick={handleStop}
-                    className="text-red-400 hover:text-red-500 transition cursor-pointer"
-                    title="Stop Session"
-                  >
-                    <CircleOff className="w-5 h-5" />
-                  </button>
-                )}
               </div>
-              <ul className="space-y-4">
+
+              {/* === Scrollable thinking section === */}
+              <ul className="space-y-4 overflow-y-auto pr-2 flex-1">
                 {thinking.map((step, index) => {
                   const nonNullActions = Object.entries(
                     step.action?.[0] || {}
@@ -581,6 +574,19 @@ export default function Home() {
                     </li>
                   );
                 })}
+                {(sessionStatus === "creating" ||
+                  sessionStatus === "active") && (
+                  <li className="flex items-center gap-3 text-gray-300 text-sm italic animate-pulse pl-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>
+                      <span className="font-semibold text-white">
+                        Glider Computer
+                      </span>{" "}
+                      is now processing...
+                    </span>
+                  </li>
+                )}
+                <span ref={logsEndRef} />
               </ul>
             </div>
           </div>
@@ -639,26 +645,25 @@ export default function Home() {
       </div>
 
       {/* React Flow Fullscreen Overlay */}
-      <div
-        className={clsx(
-          "fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm transition-opacity duration-700",
-          showReactFlow
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none z-[-1]"
-        )}
-      >
-        <div className="relative w-full h-full">
-          <ReactFlowProvider>
-            <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
-              <FlowEditor
-                start={(prompt) => start(address!, chain!.id, prompt)}
-                pollForRequests={(sessionId) => pollForRequests(sessionId)}
-                pollRecording={(sessionId) => pollRecording(sessionId)}
-              />
-            </div>
-          </ReactFlowProvider>
+      {showReactFlow && (
+        <div
+          className={clsx(
+            "fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm"
+          )}
+        >
+          <div className="relative w-full h-full">
+            <ReactFlowProvider>
+              <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
+                <FlowEditor
+                  start={(prompt) => start(address!, chain!.id, prompt)}
+                  pollForRequests={(sessionId) => pollForRequests(sessionId)}
+                  pollRecording={(sessionId) => pollRecording(sessionId)}
+                />
+              </div>
+            </ReactFlowProvider>
+          </div>
         </div>
-      </div>
+      )}
       <ToastContainer />
     </div>
   );
