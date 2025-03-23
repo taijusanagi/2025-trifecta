@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAccount, useWalletClient } from "wagmi";
@@ -17,6 +17,7 @@ export default function Home() {
   const BROWSER_USE_API_KEY = process.env.NEXT_PUBLIC_BROWSER_USE_API_KEY;
 
   const POLLING_INTERVAL = 5000;
+  const { openConnectModal } = useConnectModal();
 
   const { address, chain } = useAccount();
   const { data: walletClient } = useWalletClient();
@@ -272,10 +273,10 @@ export default function Home() {
             />
 
             <Button
-              onClick={handleStart}
+              onClick={!address || !chain?.id ? openConnectModal : handleStart}
               className="mt-4 w-full bg-white/80 text-black hover:bg-white cursor-pointer"
             >
-              Start
+              {!address || !chain?.id ? "Connect Wallet" : "Start"}
             </Button>
           </div>
 
