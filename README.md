@@ -81,11 +81,18 @@ Glider can execute a wide range of crypto actions—from processing vague instru
 
 ### Autonome
 
-Our AI Agent interacts with decentralized apps (dApps) through a headless browser, similar to Claude’s computer use or OpenAI’s operator. It features a wallet relayer—like WalletConnect—allowing users to inject their own wallets securely into the agent. The agent is deployed on Autonome and supports both local and cloud-hosted browsers, with inputs for logging and wallet request relayer paths. We also enable knowledge sharing with executed results, allowing agents to learn and share outcomes. A Trusted Execution Environment (TEE) is crucial for this, ensuring that all shared knowledge is verifiable and securely generated.
+Our AI Agent interacts with decentralized apps (dApps) through a headless browser, similar to Claude’s computer use or OpenAI’s operator. It features a wallet relayer—like WalletConnect—allowing users to inject their own wallets securely into the agent. The agent is deployed on Autonome and supports both local and cloud-hosted browsers, with inputs for logging and wallet request relayer paths.
+
+We also enable knowledge sharing with executed results, allowing agents to learn and share outcomes. A Trusted Execution Environment (TEE) is crucial for this, ensuring that all shared knowledge is verifiable and securely generated.
 
 - Framework: dbrowser012
 - Deployed Agent: dbu-qtiadr
 
 ### Recall Network
 
+Our AI Agent goes through a thinking process—understanding prompts, analyzing the browser, and deciding the next action. This thinking cycle contains valuable insights. We use Recall Network to store these thought processes, making them accessible and reusable by other users. This enables collaborative learning and improves agent performance over time.
+
+In our workflow builder, we’ve also implemented a feature to fetch data from Recall Network and automatically create new Task nodes, allowing users to build on past knowledge and accelerate agent development.
+
+Created bucket:
 https://portal.recall.network/buckets/0xFF0000000000000000000000000000000000019B
