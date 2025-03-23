@@ -645,26 +645,25 @@ export default function Home() {
       </div>
 
       {/* React Flow Fullscreen Overlay */}
-      <div
-        className={clsx(
-          "fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm transition-opacity duration-700",
-          showReactFlow
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none z-[-1]"
-        )}
-      >
-        <div className="relative w-full h-full">
-          <ReactFlowProvider>
-            <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
-              <FlowEditor
-                start={(prompt) => start(address!, chain!.id, prompt)}
-                pollForRequests={(sessionId) => pollForRequests(sessionId)}
-                pollRecording={(sessionId) => pollRecording(sessionId)}
-              />
-            </div>
-          </ReactFlowProvider>
+      {showReactFlow && (
+        <div
+          className={clsx(
+            "fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm"
+          )}
+        >
+          <div className="relative w-full h-full">
+            <ReactFlowProvider>
+              <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
+                <FlowEditor
+                  start={(prompt) => start(address!, chain!.id, prompt)}
+                  pollForRequests={(sessionId) => pollForRequests(sessionId)}
+                  pollRecording={(sessionId) => pollRecording(sessionId)}
+                />
+              </div>
+            </ReactFlowProvider>
+          </div>
         </div>
-      </div>
+      )}
       <ToastContainer />
     </div>
   );
