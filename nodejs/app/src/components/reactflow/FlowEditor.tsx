@@ -142,15 +142,22 @@ export default function FlowEditor({
     const visited = new Set<string>();
 
     setNodes((nds) =>
-      nds.map((n) => ({
-        ...n,
-        deletable: false,
-        data: {
-          ...n.data,
-          isRunning: false,
-          image: undefined, // 🧹 Reset image
-        },
-      }))
+      nds.map((n) =>
+        n.id === "start"
+          ? { ...n, deletable: false }
+          : {
+              ...n,
+              deletable: false,
+              data: {
+                ...n.data,
+                isRunning: false,
+                sessionId: "",
+                liveViewUrl: "",
+                videoUrl: "",
+                result: undefined,
+              },
+            }
+      )
     );
 
     const runNode = async (id: string) => {
