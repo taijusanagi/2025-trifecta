@@ -116,11 +116,22 @@ export default function FlowEditor({
           return;
         }
 
-        // Show selection menu
-        setMenuPosition({
-          x: (event as MouseEvent).clientX,
-          y: (event as MouseEvent).clientY,
-        });
+        const rawX = (event as MouseEvent).clientX;
+        const rawY = (event as MouseEvent).clientY;
+
+        const menuWidth = 288; // w-72 = 18rem = 288px
+        const menuHeight = 350; // estimate, adjust if needed
+
+        const clampedX = Math.min(
+          Math.max(0, rawX),
+          window.innerWidth - menuWidth
+        );
+        const clampedY = Math.min(
+          Math.max(0, rawY),
+          window.innerHeight - menuHeight
+        );
+
+        setMenuPosition({ x: clampedX, y: clampedY });
         setPendingConnection(connectingNodeId.current);
       }
 
@@ -383,7 +394,7 @@ export default function FlowEditor({
           style={{ left: menuPosition.x, top: menuPosition.y }}
         >
           <div className="p-3 font-semibold text-white border-b border-gray-700">
-            Add Node
+            Add Task Node
           </div>
 
           <button
@@ -398,7 +409,7 @@ export default function FlowEditor({
 
           {/* Other disabled options */}
           <button
-            className="w-full text-left px-4 py-2 text-gray-500 cursor-not-allowed"
+            className="w-full text-left px-4 py-2 text-white hover:bg-[#2A2A2A]"
             disabled
           >
             Access Recall Network
