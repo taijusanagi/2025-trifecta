@@ -451,8 +451,10 @@ export default function Home() {
         <main className="flex flex-col items-center gap-6 w-full max-w-4xl mx-auto mt-20 text-center transition-all duration-700">
           <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg w-full">
             <h1 className="text-3xl font-bold mb-2">Hello!!</h1>
-            <p className="text-xl text-gray-400 mb-6">What can I do for you?</p>
-            <div className="bg-black">
+            <p className="text-xl text-gray-400 mb-6">
+              Crypto AI + Browser — How can I assist?
+            </p>
+            <div className="bg-black rounded-md">
               <Textarea
                 value={task}
                 onChange={(e) => {
