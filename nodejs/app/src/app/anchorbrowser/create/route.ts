@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(_: NextRequest) {
+  console.log("test...");
   const response = await fetch("https://api.anchorbrowser.io/api/sessions", {
     method: "POST",
     headers: {

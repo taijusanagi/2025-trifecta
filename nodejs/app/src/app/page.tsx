@@ -61,6 +61,7 @@ export default function Home() {
   const categories = ["Featured", "Community"];
 
   const [showReactFlow, setShowReactFlow] = useState(false);
+  const [recordingUrl, setRecordingUrl] = useState("");
 
   const handleWalletRequest = useCallback(
     async (request: JsonRpcRequest) => {
@@ -162,6 +163,56 @@ export default function Home() {
     [handleWalletRequest]
   );
 
+  const pollRecording = async (
+    sessionId: string
+  ): Promise<string | undefined> => {
+    return new Promise((resolve) => {
+      const maxAttempts = 1000; // max retries (30 seconds)
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        try {
+          const response = await fetch(
+            `/anchorbrowser/recording/${sessionId}`,
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+          if (!response.ok) {
+            console.warn("Polling failed:", response.statusText);
+            attempts++;
+            if (attempts >= maxAttempts) {
+              clearInterval(interval);
+              resolve(undefined);
+            }
+            return;
+          }
+
+          const data = await response.json();
+          const recordingUrl = data?.recordingUrl;
+
+          if (recordingUrl) {
+            clearInterval(interval);
+            resolve(recordingUrl);
+          } else {
+            attempts++;
+            if (attempts >= maxAttempts) {
+              clearInterval(interval);
+              resolve(undefined);
+            }
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+          attempts++;
+          if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            resolve(undefined);
+          }
+        }
+      }, POLLING_INTERVAL);
+    });
+  };
+
   const handleStart = async () => {
     if (!address || !chain?.id) {
       throw new Error("Please connect your wallet first.");
@@ -183,16 +234,16 @@ export default function Home() {
     let liveViewUrl = "";
     if (process.env.NEXT_PUBLIC_IS_LOCAL_BROWSER !== "true") {
       console.log("Starting anchorbrowser...");
-      const anchorbrowserResponse = await fetch("/anchorbrowser", {
+      const anchorbrowserCreateResponse = await fetch("/anchorbrowser/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
 
-      if (!anchorbrowserResponse.ok) {
+      if (!anchorbrowserCreateResponse.ok) {
         throw new Error("Failed to start anchorbrowser.");
       }
 
-      const { id, live_view_url } = await anchorbrowserResponse.json();
+      const { id, live_view_url } = await anchorbrowserCreateResponse.json();
       liveViewUrl = live_view_url;
       console.log("Starting anchorbrowser done!");
       console.log("anchorSessionId", id);
@@ -296,6 +347,16 @@ export default function Home() {
       setSessionId(querySessionId);
     }
   }, []);
+
+  useEffect(() => {
+    if (sessionId && sessionStatus == "idle") {
+      pollRecording(sessionId).then((result) => {
+        if (result) {
+          setRecordingUrl(result);
+        }
+      });
+    }
+  }, [sessionId, sessionStatus]);
 
   const renderIndented = (value: any): React.ReactNode => {
     if (typeof value === "object" && value !== null) {
@@ -514,9 +575,22 @@ export default function Home() {
           <div className="w-full lg:w-7/10 flex flex-col gap-4">
             <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl relative border border-white/10 backdrop-blur-md bg-white/5 hover:border-white/20 transition">
               <div className="absolute top-3 left-4 z-10 bg-black/40 px-3 py-1 text-sm rounded-md font-semibold">
-                Live View
+                {sessionStatus == "idle" ? "Recorded Video" : "Live View"}
               </div>
-              {liveViewUrl && (
+              {sessionStatus === "idle" && !recordingUrl ? (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                  <span className="ml-2">Loading recorded video...</span>
+                </div>
+              ) : recordingUrl ? (
+                <video
+                  src={recordingUrl}
+                  controls
+                  autoPlay
+                  muted
+                  className="w-full h-full rounded-md"
+                />
+              ) : (
                 <iframe
                   src={liveViewUrl ?? "about:blank"}
                   title="Live View"
