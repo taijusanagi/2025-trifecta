@@ -12,8 +12,22 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "2025 Trifecta",
-  description: "This is 2025 Trifecta repository",
+  title: "Glider",
+  description:
+    "Browser unlocked: AI empowers your EOA to autonomously master any dApp.",
+  openGraph: {
+    title: "Glider",
+    description:
+      "Browser unlocked: AI empowers your EOA to autonomously master any dApp.",
+    images: [
+      {
+        url: "https://2025-trifecta.vercel.app/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Glider OGP image",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
