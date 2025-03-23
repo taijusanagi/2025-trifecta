@@ -327,12 +327,16 @@ export default function Home() {
               placeholder="Enter a goal for the session"
               className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
             />
-
             <Button
               onClick={!address || !chain?.id ? openConnectModal : handleStart}
-              className="mt-4 w-full bg-white/80 text-black hover:bg-white cursor-pointer"
+              disabled={sessionStatus === "creating"}
+              className="mt-4 w-full bg-white/80 text-black hover:bg-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {!address || !chain?.id ? "Connect Wallet" : "Start"}
+              {!address || !chain?.id
+                ? "Connect Wallet"
+                : sessionStatus === "creating"
+                ? "Starting..."
+                : "Start"}
             </Button>
           </div>
 
