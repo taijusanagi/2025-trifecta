@@ -1,21 +1,19 @@
-import { Handle, Position } from "reactflow";
+import { Handle, Position, useReactFlow } from "reactflow";
 import { useEffect, useState } from "react";
 
-export default function PromptNode({ data }: any) {
+export default function PromptNode({ data, id }: any) {
   const [opacity, setOpacity] = useState(1);
   const [scale, setScale] = useState(1);
+  const { setNodes } = useReactFlow();
 
   useEffect(() => {
     if (!data.isRunning) {
-      // Reset to normal when not running
       setScale(1);
       return;
     }
 
-    // Set scale to larger size when running starts
-    setScale(1.1);
+    setScale(1.05);
 
-    // Keep the opacity pulse animation
     const interval = setInterval(() => {
       setOpacity((prev) => (prev === 1 ? 0.6 : 1));
     }, 500);
@@ -23,15 +21,40 @@ export default function PromptNode({ data }: any) {
     return () => clearInterval(interval);
   }, [data.isRunning]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                prompt: value,
+              },
+            }
+          : node
+      )
+    );
+  };
+
   return (
     <div
-      className="relative px-4 py-2 rounded shadow border font-medium transition-all duration-500 ease-in-out bg-white/10 border-white/20 text-white"
+      className="relative w-64 rounded border border-white/20 bg-white/10 text-white p-4 shadow transition-all duration-300"
       style={{
         opacity: data.isRunning ? opacity : 1,
         transform: `scale(${scale})`,
       }}
     >
-      {data.label || "Prompt Node"}
+      <div className="font-semibold mb-2 text-white">Task Node</div>
+      <textarea
+        className="w-full p-2 text-sm bg-white/10 text-white placeholder-white/60 border border-white/20 rounded resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
+        placeholder="Enter your prompt..."
+        rows={3}
+        value={data.prompt || ""}
+        onChange={handleChange}
+      />
 
       <Handle
         type="target"
