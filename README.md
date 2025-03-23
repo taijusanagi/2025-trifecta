@@ -79,4 +79,13 @@ Glider can execute a wide range of crypto actions—from processing vague instru
 
 ## Reference
 
-TBD
+### Autonome
+
+Our AI Agent interacts with decentralized apps (dApps) through a headless browser, similar to Claude’s computer use or OpenAI’s operator. It features a wallet relayer—like WalletConnect—allowing users to inject their own wallets securely into the agent. The agent is deployed on Autonome and supports both local and cloud-hosted browsers, with inputs for logging and wallet request relayer paths. We also enable knowledge sharing with executed results, allowing agents to learn and share outcomes. A Trusted Execution Environment (TEE) is crucial for this, ensuring that all shared knowledge is verifiable and securely generated.
+
+- Framework: dbrowser012
+- Deployed Agent: dbu-qtiadr
+
+### Recall Network
+
+https://portal.recall.network/buckets/0xFF0000000000000000000000000000000000019B
