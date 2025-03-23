@@ -461,7 +461,7 @@ export default function FlowEditor({
     <div className="w-full h-full relative">
       <button
         onClick={handleClearFlow}
-        className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full"
+        className="absolute top-18 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full"
         title="Clear Flow"
       >
         <Trash2 className="w-5 h-5 text-white" />
