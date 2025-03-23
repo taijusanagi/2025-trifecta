@@ -140,11 +140,14 @@ export default function FlowEditor() {
         data: {
           ...n.data,
           isRunning: false,
+          image: undefined, // 🧹 Reset image
         },
       }))
     );
 
     const runNode = async (id: string) => {
+      const imageUrl = "https://dummyimage.com/400x200";
+
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id
@@ -153,13 +156,20 @@ export default function FlowEditor() {
                 data: {
                   ...node.data,
                   isRunning: true,
+                  image: imageUrl,
                 },
               }
             : node
         )
       );
 
-      await new Promise((res) => setTimeout(res, 2000));
+      const currentNode = nodes.find((n) => n.id === id);
+      const prompt = currentNode?.data?.prompt || "";
+
+      if (currentNode?.type === "prompt") {
+        console.log("process prompt:", prompt);
+        await new Promise((res) => setTimeout(res, 5000));
+      }
 
       setNodes((nds) =>
         nds.map((node) =>

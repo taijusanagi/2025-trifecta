@@ -48,6 +48,15 @@ export default function PromptNode({ data, id }: any) {
       }}
     >
       <div className="font-semibold mb-2 text-white">Task Node</div>
+
+      {data.image && (
+        <img
+          src={data.image}
+          alt="Processing"
+          className="w-full h-32 object-cover rounded mb-2 border border-white/20"
+        />
+      )}
+
       <textarea
         className="w-full p-2 text-sm bg-white/10 text-white placeholder-white/60 border border-white/20 rounded resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
         placeholder="Enter your prompt..."
