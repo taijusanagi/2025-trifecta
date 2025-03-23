@@ -400,6 +400,7 @@ export default function FlowEditor({
 
   const [isRecallModalOpen, setIsRecallModalOpen] = useState(false);
   const [bucketId, setBucketId] = useState("");
+  const [taskObjects, setTaskObjects] = useState<any[]>([]);
 
   useEffect(() => {
     const bucketId = window.localStorage.getItem("bucketId");
@@ -407,6 +408,48 @@ export default function FlowEditor({
       setBucketId(bucketId);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!recall?.bucketManager || !bucketId) {
+        setTaskObjects([]);
+        return;
+      }
+
+      try {
+        const {
+          result: { objects },
+        } = await recall.bucketManager.query(bucketId as `0x${string}`);
+
+        const decodedTasks = await Promise.all(
+          objects.map(async (obj: any) => {
+            try {
+              const { result: file } = await recall.bucketManager.get(
+                bucketId as `0x${string}`,
+                obj.key
+              );
+              const decoded = new TextDecoder().decode(file);
+              const json = JSON.parse(decoded);
+              return {
+                key: obj.key,
+                ...json,
+              };
+            } catch (err) {
+              console.error(`Failed to decode or parse ${obj.key}`, err);
+              return null;
+            }
+          })
+        );
+
+        // Filter out any nulls (failed parses)
+        setTaskObjects(decodedTasks.filter(Boolean));
+      } catch (err) {
+        console.error("Failed to fetch tasks from Recall:", err);
+      }
+    };
+
+    fetchTasks();
+  }, [recall?.bucketManager, bucketId]);
 
   return (
     <div className="w-full h-full relative">
@@ -526,20 +569,9 @@ export default function FlowEditor({
 
             {/* Scrollable task list */}
             <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
-              {[
-                {
-                  id: "magiceden-task",
-                  task: "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail.",
-                  referenceUrl: "https://magiceden.io",
-                },
-                {
-                  id: "vitalik-task",
-                  task: "Get Vitalik Buterin's Ethereum address",
-                  referenceUrl: "https://etherscan.io/address/vitalik.eth",
-                },
-              ].map((item) => (
+              {taskObjects.map((item) => (
                 <button
-                  key={item.id}
+                  key={item.key}
                   className="w-full px-4 py-3 rounded-md bg-white/10 text-white hover:bg-white/20 text-left cursor-pointer"
                   onClick={() => {
                     createNodeAtPosition(
@@ -552,9 +584,26 @@ export default function FlowEditor({
                   }}
                 >
                   <div className="font-medium mb-1">{item.task}</div>
-                  <div className="text-xs text-gray-400 break-all">
-                    {item.referenceUrl}
-                  </div>
+
+                  {/* Optional reference URL */}
+                  {item.referenceUrl && (
+                    <div className="text-xs text-gray-400 break-all">
+                      {item.referenceUrl}
+                    </div>
+                  )}
+
+                  {/* Safe portal link */}
+                  <a
+                    href={`https://portal.recall.network/buckets/${bucketId}?path=${encodeURIComponent(
+                      item.key
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs underline text-blue-400 hover:text-blue-300"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View on Recall Portal
+                  </a>
                 </button>
               ))}
             </div>
