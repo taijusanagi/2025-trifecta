@@ -451,10 +451,18 @@ export default function Home() {
 
             <Textarea
               value={task}
-              onChange={(e) => setTask(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= 450) {
+                  setTask(value);
+                }
+              }}
               placeholder="Enter a goal for the session"
               className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
             />
+            <div className="text-right text-sm text-white/50 mt-1">
+              {task.length}/450 characters
+            </div>
             <Button
               onClick={!address || !chain?.id ? openConnectModal : handleStart}
               disabled={sessionStatus === "creating"}
