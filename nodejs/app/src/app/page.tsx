@@ -427,13 +427,18 @@ export default function Home() {
             <Button
               onClick={!address || !chain?.id ? openConnectModal : handleStart}
               disabled={sessionStatus === "creating"}
-              className="mt-4 w-full bg-white/80 text-black hover:bg-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-4 w-full bg-white/80 text-black hover:bg-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {!address || !chain?.id
-                ? "Connect Wallet"
-                : sessionStatus === "creating"
-                ? "Starting..."
-                : "Start"}
+              {!address || !chain?.id ? (
+                "Connect Wallet"
+              ) : sessionStatus === "creating" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                "Start"
+              )}
             </Button>
           </div>
 
