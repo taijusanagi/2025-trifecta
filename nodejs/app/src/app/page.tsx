@@ -48,7 +48,6 @@ export default function Home() {
 
   const [task, setTask] = useState(taskExamples[0].task);
 
-  const [isPolling, setIsPolling] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isPollingRef = useRef(false);
 
@@ -146,90 +145,105 @@ export default function Home() {
       throw new Error("Please connect your wallet first.");
     }
 
-    setIsRunning(true);
     setSessionStatus("creating");
 
     try {
-      let anchorSessionId = "";
-      let liveViewUrl = "";
-      if (process.env.NEXT_PUBLIC_IS_LOCAL_BROWSER !== "true") {
-        console.log("Starting anchorbrowser...");
-        const anchorbrowserResponse = await fetch("/anchorbrowser", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!anchorbrowserResponse.ok) {
-          throw new Error("Failed to start anchorbrowser.");
-        }
-
-        const { id, live_view_url } = await anchorbrowserResponse.json();
-        liveViewUrl = live_view_url;
-        console.log("Starting anchorbrowser done!");
-        console.log("anchorSessionId", id);
-        console.log("liveViewUrl", liveViewUrl);
-        setLiveViewUrl(liveViewUrl);
-        anchorSessionId = id;
-      }
-
-      console.log("Starting session...", { address, chainId: chain.id });
-      const createSessionResponse = await fetch("/relayer/create-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address,
-          chainId: chain.id,
-          task,
-          anchorSessionId,
-          liveViewUrl,
-        }),
-      });
-
-      if (!createSessionResponse.ok) {
-        throw new Error("Failed to create relayer session.");
-      }
-
-      const { sessionId } = await createSessionResponse.json();
-      console.log("Starting session done!");
-      console.log("sessionId", sessionId);
+      const sessionId = await start(address, chain.id, task);
       setSessionId(sessionId);
-      setSessionStatus("active");
-      setIsPolling(true);
-
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-
-      if (BROWSER_USE_API_KEY) {
-        headers["Authorization"] = `Bearer ${BROWSER_USE_API_KEY}`;
-      }
-
-      const startResponse = await fetch(`${BROWSER_USE_API_URL}/chat`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          text: JSON.stringify({
-            session_id: sessionId,
-            task: task,
-            anchor_session_id: anchorSessionId,
-          }),
-        }),
-      });
-
-      if (!startResponse.ok) {
-        throw new Error("Failed to start browser-use.");
-      }
-      console.log("Done!!");
     } catch (error) {
       console.error(error);
+      setSessionStatus("idle");
     }
   };
 
-  useEffect(() => {
-    if (sessionId && isPolling) {
-      pollForRequests();
+  const start = async (address: string, chainId: number, task: string) => {
+    let anchorSessionId = "";
+    let liveViewUrl = "";
+    if (process.env.NEXT_PUBLIC_IS_LOCAL_BROWSER !== "true") {
+      console.log("Starting anchorbrowser...");
+      const anchorbrowserResponse = await fetch("/anchorbrowser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!anchorbrowserResponse.ok) {
+        throw new Error("Failed to start anchorbrowser.");
+      }
+
+      const { id, live_view_url } = await anchorbrowserResponse.json();
+      liveViewUrl = live_view_url;
+      console.log("Starting anchorbrowser done!");
+      console.log("anchorSessionId", id);
+      console.log("liveViewUrl", liveViewUrl);
+      setLiveViewUrl(liveViewUrl);
+      anchorSessionId = id;
     }
-  }, [sessionId, isPolling, pollForRequests]);
+
+    console.log("Starting session...", { address, chainId });
+    const createSessionResponse = await fetch("/relayer/create-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        address,
+        chainId,
+        task,
+        anchorSessionId,
+        liveViewUrl,
+      }),
+    });
+
+    if (!createSessionResponse.ok) {
+      throw new Error("Failed to create relayer session.");
+    }
+
+    const { sessionId } = await createSessionResponse.json();
+    console.log("Starting session done!");
+    console.log("sessionId", sessionId);
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (BROWSER_USE_API_KEY) {
+      headers["Authorization"] = `Bearer ${BROWSER_USE_API_KEY}`;
+    }
+
+    fetch(`${BROWSER_USE_API_URL}/chat`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        text: JSON.stringify({
+          session_id: sessionId,
+          task: task,
+          anchor_session_id: anchorSessionId,
+        }),
+      }),
+    });
+
+    console.log("Done!!");
+    return sessionId;
+  };
+
+  useEffect(() => {
+    console.log("useEffect: sessionId", sessionId);
+    if (!sessionId) return;
+
+    const fetchInfo = async () => {
+      try {
+        const res = await fetch(`/relayer/${sessionId}/info`);
+        const data = await res.json();
+        if (data.task) setTask(data.task);
+        if (data.liveViewUrl) setLiveViewUrl(data.liveViewUrl);
+        setIsRunning(true);
+        setSessionStatus("active");
+        pollForRequests();
+      } catch (err) {
+        console.error("Failed to fetch session info:", err);
+      }
+    };
+
+    fetchInfo();
+  }, [sessionId, pollForRequests]);
 
   const handleStop = () => {
     setSessionId("");
@@ -250,23 +264,9 @@ export default function Home() {
   const searchParams = useSearchParams();
   useEffect(() => {
     const querySessionId = searchParams.get("sessionId");
+
     if (querySessionId) {
       setSessionId(querySessionId);
-      setSessionStatus("active");
-      setIsRunning(true);
-      setIsPolling(true);
-
-      fetch(`/relayer/${querySessionId}/info`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("data", data);
-          if (data?.liveViewUrl) {
-            setLiveViewUrl(data.liveViewUrl);
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to fetch session info:", err);
-        });
     }
   }, []);
 
@@ -504,7 +504,7 @@ export default function Home() {
         <div className="relative w-full h-full">
           <ReactFlowProvider>
             <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
-              <FlowEditor />
+              <FlowEditor start={() => start(address!, chain!.id, task)} />
             </div>
           </ReactFlowProvider>
         </div>
