@@ -434,7 +434,7 @@ export default function Home() {
                       </p>
                       {nonNullActions.length > 0 && (
                         <div className="mt-1">
-                          <p className="font-semibold">Action(s):</p>
+                          <p className="font-semibold">Actions:</p>
                           <ul className="list-disc list-inside text-gray-200">
                             {nonNullActions.map(([key, value], i) => (
                               <li key={i}>

@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { setSessionLog, getSessionLog } from "@/lib/relayer";
+import {
+  setSessionLog,
+  getSessionLog,
+  getSessionInfo,
+  setSessionInfo,
+} from "@/lib/relayer";
 
 const defaultLog = {
   current_state: {
-    evaluation_previous_goal: "Start wallet injected browser-use",
+    evaluation_previous_goal: "Start wallet injected browser",
     next_goal: "Connect browser",
   },
   action: [
@@ -25,6 +30,20 @@ export async function POST(
   }
 
   await setSessionLog(sessionId, JSON.stringify(body));
+  const done = body.action.find((obj: any) => obj.done);
+
+  if (done) {
+    const {
+      done: { success },
+    } = done;
+    console.log("Session done", success);
+    const info = await getSessionInfo(sessionId);
+    await setSessionInfo(sessionId, {
+      ...info,
+      success,
+    });
+  }
+
   return NextResponse.json({ message: "Log appended" });
 }
 

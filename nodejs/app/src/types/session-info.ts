@@ -4,4 +4,5 @@ export interface SessionInfo {
   task: string;
   anchorSessionId?: string;
   liveViewUrl?: string;
+  success: boolean;
 }
