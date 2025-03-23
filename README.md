@@ -24,58 +24,13 @@ Glider can execute a wide range of crypto actions—from processing vague instru
 
 ![architecture](./nodejs/app/public/architecture.png)
 
-### How the AI Agent Works
+When a user starts a task, our AI Agent launches inside a Trusted Execution Environment (TEE) to ensure secure execution. The agent controls a headless browser using the Chrome DevTools Protocol (CDP) over WebSocket, powered by our browser automation module.
 
-#### 1. Request Handling
+As the browser runs, it captures key vision data—such as screenshots and DOM elements—which is then sent to OpenAI for analysis. Based on the AI’s output, the agent determines the next action, whether it’s clicking a button, typing text, or navigating to another page, and executes it in real time.
 
-- A user initiates a **request** to the AI **Agent**, which runs inside a **Trusted Execution Environment (TEE)**.
+Meanwhile, a Headless Web3 Provider is injected into the browser. This simulates a typical window.ethereum interface found in dApps. Any signing or transaction requests are intercepted and securely forwarded to the user's real wallet—ensuring that your private key is never exposed and always stays under your control.
 
-#### 2. Vision + Action Loop
-
-- The Agent uses the `browser-use` module to:
-  - Control a **headless browser** via **CDP (Chrome DevTools Protocol) over WebSocket**.
-  - Receive **vision data** from the browser (screenshots, DOM elements, etc.).
-
-#### 3. Decision-Making via OpenAI
-
-- Vision data is sent to the **OpenAI API** for analysis and action planning.
-- Based on the analysis, the Agent generates an **action** (e.g., click, type, navigate).
-- This action is sent back to the headless browser via the `browser-use` control module.
-
-### How the Headless Wallet Provider Works
-
-#### 1. Web3 Injection
-
-- The **headless browser** is injected with a **Headless Web3 Provider**, emulating `window.ethereum` in normal dApps.
-
-#### 2. Request Interception
-
-- The provider intercepts Web3 requests (e.g., signing messages or transactions).
-- These requests are **forwarded** to the user’s real wallet.
-
-#### 3. Key Security
-
-- **The private key is never exposed to the agent**.
-- It is fully **managed by the user**, ensuring secure signing.
-
-### How Knowledge Storage Works
-
-#### 1. Knowledge Import/Export
-
-- Users can **import shared knowledge** (e.g., workflows, prompts) into the Agent.
-- This process is backed by **TEE proof**, verifying that the data originates from a secure enclave.
-
-#### 2. Storage Network
-
-- Knowledge is managed using the **Recall Storage Network**:
-  - Stores modular and reusable AI capabilities.
-  - Enables collaborative intelligence across agents.
-
-#### 3. UI Integration
-
-- A UI interface allows users to:
-  - Click **“Access Recall Storage Network”** to import knowledge modules.
-  - Benefit from secure, transparent, and user-consented knowledge sharing.
+Every prompt, decision, and result can be securely stored in our Recall Storage Network, enabling users to manage, import, and share reusable knowledge modules (like workflows and prompts). This opens up the possibility for on-chain transparent knowledge sharing, enhanced with TEE attestation to ensure authenticity, security, and trust across agents and users.
 
 ## Reference
 
