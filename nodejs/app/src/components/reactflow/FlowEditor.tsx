@@ -240,7 +240,14 @@ export default function FlowEditor({
           )
         );
 
-        const currentNode = nodes.find((n) => n.id === id);
+        const currentNode = (() => {
+          let latest: Node | undefined;
+          setNodes((nds) => {
+            latest = nds.find((n) => n.id === id);
+            return nds;
+          });
+          return latest;
+        })();
         const prompt = currentNode?.data?.prompt || "";
 
         if (currentNode?.type === "prompt") {
