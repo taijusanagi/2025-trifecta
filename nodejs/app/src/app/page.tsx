@@ -30,7 +30,7 @@ export default function Home() {
       const bucketManager = client.bucketManager();
       return { client, bucketManager };
     }
-  }, [chain?.id]);
+  }, [chain, walletClient]);
 
   const [sessionId, setSessionId] = useState("");
 
@@ -42,15 +42,16 @@ export default function Home() {
       task: "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail.",
     },
     {
-      title: "Discover Vitalik's Ethereum Address",
+      title: "Get Latest ETH Price",
       description:
-        "Instantly fetch Ethereum founder Vitalik Buterin's official wallet address.",
-      task: "Get Vitalik Buterin's Ethereum address",
+        "Instantly fetch the current Ethereum (ETH) price in USD from a reliable source.",
+      task: "Visit https://coinmarketcap.com. Search for Ethereum. Locate the current ETH price in USD. Copy only the price number without the dollar sign or any other symbols. Example: if price is $3,200.45, copy '3200.45'.",
     },
     {
-      title: "Interactive Course on Momentum",
-      description: "Manus develops engaging video presentations...",
-      task: "Create an interactive course on momentum for middle school students...",
+      title: "Discover Vitalik's Ethereum Address",
+      description:
+        "Instantly fetch the official Ethereum wallet address of Vitalik Buterin, the co-founder of Ethereum.",
+      task: "Visit ENS app. In the search bar, type 'vitalik.eth' and press enter. Wait for the page to load. Copy the full Ethereum address shown on the page (a string starting with '0x').",
     },
   ];
 
@@ -802,7 +803,12 @@ export default function Home() {
                     setIsModalOpen(false);
                   } catch (err: any) {
                     console.error(err);
-                    toast.error("Upload failed: " + err?.message);
+                    toast.error(
+                      "Upload failed: " +
+                        (err?.message?.length > 40
+                          ? err.message.slice(0, 40) + "..."
+                          : err?.message)
+                    );
                   }
                 }}
               >
