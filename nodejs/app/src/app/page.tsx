@@ -405,7 +405,7 @@ export default function Home() {
           </span>
         </div>
         <ConnectButton
-          chainStatus="none"
+          chainStatus="icon"
           showBalance={false}
           accountStatus="address"
         />
