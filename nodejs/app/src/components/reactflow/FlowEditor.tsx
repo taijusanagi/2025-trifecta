@@ -401,6 +401,7 @@ export default function FlowEditor({
   const [isRecallModalOpen, setIsRecallModalOpen] = useState(false);
   const [bucketId, setBucketId] = useState("");
   const [taskObjects, setTaskObjects] = useState<any[]>([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
 
   useEffect(() => {
     const bucketId = window.localStorage.getItem("bucketId");
@@ -415,6 +416,8 @@ export default function FlowEditor({
         setTaskObjects([]);
         return;
       }
+
+      setIsLoadingTasks(true);
 
       try {
         const {
@@ -441,10 +444,11 @@ export default function FlowEditor({
           })
         );
 
-        // Filter out any nulls (failed parses)
         setTaskObjects(decodedTasks.filter(Boolean));
       } catch (err) {
         console.error("Failed to fetch tasks from Recall:", err);
+      } finally {
+        setIsLoadingTasks(false);
       }
     };
 
@@ -569,43 +573,51 @@ export default function FlowEditor({
 
             {/* Scrollable task list */}
             <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
-              {taskObjects.map((item) => (
-                <button
-                  key={item.key}
-                  className="w-full px-4 py-3 rounded-md bg-white/10 text-white hover:bg-white/20 text-left cursor-pointer"
-                  onClick={() => {
-                    createNodeAtPosition(
-                      "prompt",
-                      { x: window.innerWidth / 2, y: window.innerHeight / 2 },
-                      pendingConnection,
-                      item.task
-                    );
-                    setIsRecallModalOpen(false);
-                  }}
-                >
-                  <div className="font-medium mb-1">{item.task}</div>
-
-                  {/* Optional reference URL */}
-                  {item.referenceUrl && (
-                    <div className="text-xs text-gray-400 break-all">
-                      {item.referenceUrl}
-                    </div>
-                  )}
-
-                  {/* Safe portal link */}
-                  <a
-                    href={`https://portal.recall.network/buckets/${bucketId}?path=${encodeURIComponent(
-                      item.key
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs underline text-blue-400 hover:text-blue-300"
-                    onClick={(e) => e.stopPropagation()}
+              {isLoadingTasks ? (
+                <div className="text-center text-sm text-gray-400">
+                  Loading tasks...
+                </div>
+              ) : taskObjects.length === 0 ? (
+                <div className="text-center text-sm text-gray-500">
+                  No tasks found in this bucket.
+                </div>
+              ) : (
+                taskObjects.map((item) => (
+                  <button
+                    key={item.key}
+                    className="w-full px-4 py-3 rounded-md bg-white/10 text-white hover:bg-white/20 text-left cursor-pointer"
+                    onClick={() => {
+                      createNodeAtPosition(
+                        "prompt",
+                        { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+                        pendingConnection,
+                        item.task
+                      );
+                      setIsRecallModalOpen(false);
+                    }}
                   >
-                    View on Recall Portal
-                  </a>
-                </button>
-              ))}
+                    <div className="font-medium mb-1">{item.task}</div>
+
+                    {item.referenceUrl && (
+                      <div className="text-xs text-gray-400 break-all">
+                        {item.referenceUrl}
+                      </div>
+                    )}
+
+                    <a
+                      href={`https://portal.recall.network/buckets/${bucketId}?path=${encodeURIComponent(
+                        item.key
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs underline text-blue-400 hover:text-blue-300"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      View on Recall Portal
+                    </a>
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </div>
