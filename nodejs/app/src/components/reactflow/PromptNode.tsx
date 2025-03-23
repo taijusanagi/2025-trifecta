@@ -65,11 +65,11 @@ export default function PromptNode({ data, id }: any) {
 
       <div className="font-semibold mb-2 text-white">Task Node</div>
 
-      {data.image && (
-        <img
-          src={data.image}
-          alt="Processing"
-          className="w-full h-32 object-cover rounded mb-2 border border-white/20"
+      {data.liveViewUrl && (
+        <iframe
+          src={data.liveViewUrl}
+          title="Live View"
+          className="w-full h-32 rounded mb-2 border border-white/20"
         />
       )}
 

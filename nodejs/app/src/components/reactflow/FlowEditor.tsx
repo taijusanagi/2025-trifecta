@@ -152,8 +152,6 @@ export default function FlowEditor({
     );
 
     const runNode = async (id: string) => {
-      const imageUrl = "https://dummyimage.com/400x200";
-
       setNodes((nds) =>
         nds.map((node) =>
           node.id === id
@@ -162,7 +160,6 @@ export default function FlowEditor({
                 data: {
                   ...node.data,
                   isRunning: true,
-                  image: imageUrl,
                 },
               }
             : node
@@ -176,8 +173,28 @@ export default function FlowEditor({
         const sessionId = await start(prompt);
         console.log("Session ID:", sessionId);
 
-        const maxAttempts = 1000; // a lot
-        const pollInterval = 1000; // 1 second
+        // 👇 Fetch liveViewUrl after getting sessionId
+        const infoRes = await fetch(`/relayer/${sessionId}/info`);
+        const { liveViewUrl } = await infoRes.json();
+
+        // ✅ Pass sessionId and liveViewUrl early
+        setNodes((nds) =>
+          nds.map((node) =>
+            node.id === id
+              ? {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    sessionId,
+                    liveViewUrl,
+                  },
+                }
+              : node
+          )
+        );
+
+        const maxAttempts = 1000;
+        const pollInterval = 1000;
         let attempts = 0;
 
         const result: boolean | undefined = await new Promise((resolve) => {
@@ -193,7 +210,7 @@ export default function FlowEditor({
         });
 
         if (result !== undefined) {
-          // Pass data to node
+          // ✅ Pass result, sessionId, and liveViewUrl to node
           setNodes((nds) =>
             nds.map((node) =>
               node.id === id
@@ -201,7 +218,7 @@ export default function FlowEditor({
                     ...node,
                     data: {
                       ...node.data,
-                      result, // 👈 pass result (boolean)
+                      result,
                     },
                   }
                 : node
