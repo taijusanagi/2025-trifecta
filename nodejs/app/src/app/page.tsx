@@ -30,7 +30,7 @@ export default function Home() {
       const bucketManager = client.bucketManager();
       return { client, bucketManager };
     }
-  }, [chain]);
+  }, [chain?.id]);
 
   const [sessionId, setSessionId] = useState("");
 
