@@ -58,8 +58,6 @@ Glider can execute a wide range of crypto actions—from processing vague instru
 - **The private key is never exposed to the agent**.
 - It is fully **managed by the user**, ensuring secure signing.
 
----
-
 ### How Knowledge Storage Works
 
 #### 1. Knowledge Import/Export
