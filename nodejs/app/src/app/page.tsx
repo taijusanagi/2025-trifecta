@@ -514,12 +514,12 @@ export default function Home() {
                 <h2 className="text-xl font-semibold text-white">
                   Glider Computer
                 </h2>{" "}
-                {/* {sessionStatus === "idle" && ( */}
-                <Database
-                  className="w-5 h-5 text-gray-400 ml-4 cursor-pointer"
-                  onClick={() => setIsModalOpen(true)}
-                />
-                {/* )} */}
+                {sessionStatus === "idle" && (
+                  <Database
+                    className="w-5 h-5 text-gray-400 ml-4 cursor-pointer"
+                    onClick={() => setIsModalOpen(true)}
+                  />
+                )}
               </div>
 
               {/* === Session Status Box === */}
