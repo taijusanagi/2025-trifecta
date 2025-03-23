@@ -351,12 +351,16 @@ export default function Home() {
   }, [sessionId, pollForRequests]);
 
   const handleStop = () => {
+    if (sessionId) {
+      setTimeout(() => setSpinning(false), 1000);
+    }
     setSessionId("");
     setLiveViewUrl("");
     setIsRunning(false);
     setThinking([]);
     setSessionStatus("idle");
     setShowReactFlow(false);
+    setSpinning(true);
   };
 
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -411,6 +415,8 @@ export default function Home() {
     }
   }, []);
 
+  const [spinning, setSpinning] = useState(false);
+
   return (
     <div className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
@@ -421,7 +427,7 @@ export default function Home() {
           <img
             src="/logo_transparent.png"
             alt="Glider Logo"
-            className="w-12 h-12"
+            className={`w-12 h-12 ${spinning ? "animate-spin" : ""}`}
           />
           <span className="text-3xl font-bold text-white tracking-wide">
             Glider
