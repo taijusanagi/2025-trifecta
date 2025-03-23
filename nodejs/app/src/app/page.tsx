@@ -484,7 +484,7 @@ export default function Home() {
         </main>
       ) : (
         // === ACTIVE SESSION 3:7 SPLIT VIEW ===
-        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out md:h-[calc(100vh-120px)]">
+        <main className="flex flex-col-reverse lg:flex-row gap-x-6 gap-y-4 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out lg:h-[calc(100vh-120px)]">
           {/* === LEFT PANEL === */}
           <div className="w-full lg:w-3/10 flex flex-col gap-6 h-full overflow-y-auto">
             <div className="flex flex-col gap-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg h-full">
@@ -531,10 +531,7 @@ export default function Home() {
               </div>
 
               {/* === Scrollable thinking section === */}
-              <ul
-                className="space-y-4 overflow-y-auto pr-2"
-                style={{ maxHeight: "calc(100vh - 300px)" }}
-              >
+              <ul className="space-y-4 overflow-y-auto pr-2 flex-1">
                 {thinking.map((step, index) => {
                   const nonNullActions = Object.entries(
                     step.action?.[0] || {}
@@ -577,20 +574,20 @@ export default function Home() {
                     </li>
                   );
                 })}
-
+                {(sessionStatus === "creating" ||
+                  sessionStatus === "active") && (
+                  <li className="flex items-center gap-3 text-gray-300 text-sm italic animate-pulse pl-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>
+                      <span className="font-semibold text-white">
+                        Glider Computer
+                      </span>{" "}
+                      is now processing...
+                    </span>
+                  </li>
+                )}
                 <span ref={logsEndRef} />
               </ul>
-              {(sessionStatus === "creating" || sessionStatus === "active") && (
-                <li className="flex items-center gap-3 text-gray-300 text-sm italic animate-pulse pl-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>
-                    <span className="font-semibold text-white">
-                      Glider Computer
-                    </span>{" "}
-                    is now processing...
-                  </span>
-                </li>
-              )}
             </div>
           </div>
 
