@@ -13,6 +13,8 @@ import {
 } from "reactflow";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { toast } from "react-toastify";
+
 import StartNode from "./StartNode";
 import PromptNode from "./PromptNode";
 
@@ -100,6 +102,13 @@ export default function FlowEditor({
         const promptCount = nodes.filter((n) => n.type === "prompt").length;
 
         if (promptCount >= 3) {
+          toast.warn("You can only create up to 3 nodes for this hackathon.", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+          });
           connectingNodeId.current = null;
           return;
         }
