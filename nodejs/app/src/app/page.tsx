@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAccount, useWalletClient } from "wagmi";
 import { JsonRpcRequest } from "@/types/json-rpc-request";
 import { hexToString } from "viem";
-import { CircleOff, Loader2, Workflow, X } from "lucide-react";
+import { Loader2, Workflow, X, Database } from "lucide-react";
 import clsx from "clsx";
 import { ReactFlowProvider } from "reactflow";
 import FlowEditor from "@/components/reactflow/FlowEditor";
 import { ToastContainer, toast } from "react-toastify";
+import { RecallClient } from "@recallnet/sdk/client";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -23,6 +24,13 @@ export default function Home() {
 
   const { address, chain } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const recall = useMemo(() => {
+    if (chain?.id === 2481632) {
+      const client = new RecallClient({ walletClient });
+      const bucketManager = client.bucketManager();
+      return { client, bucketManager };
+    }
+  }, [chain]);
 
   const [sessionId, setSessionId] = useState("");
 
@@ -391,6 +399,16 @@ export default function Home() {
     return <span className="text-sm text-gray-200">{String(value)}</span>;
   };
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [bucketId, setBucketId] = useState("");
+
+  useEffect(() => {
+    const bucketId = window.localStorage.getItem("bucketId");
+    if (bucketId) {
+      setBucketId(bucketId);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
@@ -404,11 +422,13 @@ export default function Home() {
             Glider
           </span>
         </div>
-        <ConnectButton
-          chainStatus="none"
-          showBalance={false}
-          accountStatus="address"
-        />
+        <div className="z-60">
+          <ConnectButton
+            chainStatus="icon"
+            showBalance={false}
+            accountStatus="address"
+          />
+        </div>
       </header>
 
       {!isRunning ? (
@@ -489,9 +509,17 @@ export default function Home() {
           <div className="w-full lg:w-3/10 flex flex-col gap-6 h-full overflow-y-auto">
             <div className="flex flex-col gap-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg h-full">
               {/* === Header === */}
-              <h2 className="text-xl font-semibold text-white">
-                Glider Computer
-              </h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-white">
+                  Glider Computer
+                </h2>{" "}
+                {sessionStatus === "idle" && (
+                  <Database
+                    className="w-5 h-5 text-gray-400 ml-4 cursor-pointer"
+                    onClick={() => setIsModalOpen(true)}
+                  />
+                )}
+              </div>
 
               {/* === Session Status Box === */}
               <div
@@ -665,6 +693,125 @@ export default function Home() {
         </div>
       )}
       <ToastContainer />
+      {isModalOpen && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+          <div className="relative bg-[#1a1a1a] rounded-xl p-6 border border-white/20 w-full max-w-md shadow-lg">
+            {/* Close icon */}
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-xl font-bold text-white mb-2">
+              Upload Knowledge to Recall Network
+            </h2>
+
+            <p className="text-sm text-gray-400 mb-4">
+              You need to get token at{" "}
+              <a
+                href="https://docs.recall.network/intro/faucet"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-white hover:text-gray-200"
+              >
+                faucet
+              </a>
+              .
+              <br />
+              Then create credit and create bucket in the{" "}
+              <a
+                href="https://docs.recall.network/intro/portal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-white hover:text-gray-200"
+              >
+                Recall Portal
+              </a>
+              .
+            </p>
+
+            <div className="space-y-4">
+              {/* Bucket ID */}
+              <div className="space-y-1">
+                <label className="text-sm text-gray-300">Bucket ID</label>
+                <input
+                  type="text"
+                  placeholder="Bucket ID"
+                  value={bucketId}
+                  onChange={(e) => {
+                    window.localStorage.setItem("bucketId", e.target.value);
+                    setBucketId(e.target.value);
+                  }}
+                  className="w-full px-3 py-2 rounded-md bg-white/10 text-white border border-white/20 text-sm"
+                />
+              </div>
+
+              {/* Session ID */}
+              <div className="space-y-1">
+                <label className="text-sm text-gray-300">Session ID</label>
+                <input
+                  type="text"
+                  placeholder="Session ID"
+                  value={sessionId}
+                  disabled
+                  className="w-full px-3 py-2 rounded-md bg-white/10 text-white border border-white/20 text-sm opacity-50"
+                />
+              </div>
+              <Button
+                className="w-full bg-white text-black hover:bg-gray-200 cursor-pointer"
+                onClick={async () => {
+                  if (!recall?.bucketManager)
+                    return toast.error("Please connect Recall Network!");
+
+                  if (!bucketId) {
+                    return toast.error(
+                      "Please provide both bucket ID and file name"
+                    );
+                  }
+
+                  try {
+                    const jsonString = JSON.stringify(
+                      { task, thinking },
+                      null,
+                      2
+                    ); // pretty print
+                    const content = new TextEncoder().encode(jsonString);
+
+                    const file = new File([content], sessionId, {
+                      type: "application/json",
+                    });
+
+                    const key = file.name;
+
+                    const { meta: addMeta } = await recall.bucketManager.add(
+                      bucketId as `0x${string}`,
+                      key,
+                      file
+                    );
+
+                    toast.success(
+                      "Knowledge uploaded! TX: " + addMeta?.tx?.transactionHash
+                    );
+                    console.log(
+                      "Object added at:",
+                      addMeta?.tx?.transactionHash
+                    );
+
+                    setIsModalOpen(false);
+                  } catch (err: any) {
+                    console.error(err);
+                    toast.error("Upload failed: " + err?.message);
+                  }
+                }}
+              >
+                Upload
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
