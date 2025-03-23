@@ -11,7 +11,6 @@ import { CircleOff, Loader2, Workflow, X } from "lucide-react";
 import clsx from "clsx";
 import { ReactFlowProvider } from "reactflow";
 import FlowEditor from "@/components/reactflow/FlowEditor";
-import { useSearchParams } from "next/navigation";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -338,15 +337,6 @@ export default function Home() {
       logsEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [thinking]);
-
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    const querySessionId = searchParams.get("sessionId");
-
-    if (querySessionId) {
-      setSessionId(querySessionId);
-    }
-  }, []);
 
   useEffect(() => {
     if (sessionId && sessionStatus == "idle") {
