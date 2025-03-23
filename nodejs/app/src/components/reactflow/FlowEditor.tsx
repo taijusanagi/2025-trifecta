@@ -11,12 +11,14 @@ import {
   Node,
   OnConnectStartParams,
 } from "reactflow";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Trash2, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 import StartNode from "./StartNode";
 import PromptNode from "./PromptNode";
+import { useAccount, useWalletClient } from "wagmi";
+import { RecallClient } from "@recallnet/sdk/client";
 
 const nodeTypes = {
   start: StartNode,
@@ -154,7 +156,8 @@ export default function FlowEditor({
   const createNodeAtPosition = (
     type: string,
     screenPos: { x: number; y: number },
-    sourceId: string | null
+    sourceId: string | null,
+    task?: string
   ) => {
     const reactFlowBounds = (
       document.querySelector(".react-flow") as HTMLDivElement
@@ -170,7 +173,7 @@ export default function FlowEditor({
       id: newNodeId,
       type,
       position,
-      data: { label: `${type} node` },
+      data: { label: `${type} node`, prompt: task },
       deletable: !isRunning,
     };
 
@@ -385,6 +388,26 @@ export default function FlowEditor({
     setMenuPosition(null);
   };
 
+  const { chain } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const recall = useMemo(() => {
+    if (chain?.id === 2481632) {
+      const client = new RecallClient({ walletClient });
+      const bucketManager = client.bucketManager();
+      return { client, bucketManager };
+    }
+  }, [chain]);
+
+  const [isRecallModalOpen, setIsRecallModalOpen] = useState(false);
+  const [bucketId, setBucketId] = useState("");
+
+  useEffect(() => {
+    const bucketId = window.localStorage.getItem("bucketId");
+    if (bucketId) {
+      setBucketId(bucketId);
+    }
+  }, []);
+
   return (
     <div className="w-full h-full relative">
       <button
@@ -435,7 +458,9 @@ export default function FlowEditor({
           {/* Other disabled options */}
           <button
             className="w-full text-left px-4 py-2 text-white hover:bg-[#2A2A2A]"
-            disabled
+            onClick={() => {
+              setIsRecallModalOpen(true);
+            }}
           >
             Access Recall Storage Network
           </button>
@@ -469,6 +494,71 @@ export default function FlowEditor({
           >
             Game
           </button>
+        </div>
+      )}
+      {isRecallModalOpen && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+          <div className="relative bg-[#1a1a1a] rounded-xl p-6 border border-white/20 w-full max-w-md max-h-[90vh] shadow-lg">
+            <button
+              onClick={() => setIsRecallModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-white mb-2">
+              Select Task from Recall Storage
+            </h2>
+
+            {/* Bucket ID input with margin bottom */}
+            <div className="space-y-1 mb-4">
+              <label className="text-sm text-gray-300">Bucket ID</label>
+              <input
+                type="text"
+                placeholder="Bucket ID"
+                value={bucketId}
+                onChange={(e) => {
+                  window.localStorage.setItem("bucketId", e.target.value);
+                  setBucketId(e.target.value);
+                }}
+                className="w-full px-3 py-2 rounded-md bg-white/10 text-white border border-white/20 text-sm"
+              />
+            </div>
+
+            {/* Scrollable task list */}
+            <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+              {[
+                {
+                  id: "magiceden-task",
+                  task: "Go to https://magiceden.io. Add Magic Eden extra https header origin. Click login. Click View all wallets. Click Headless Web3 Provider. Click Create. Click Create New NFT Collection. Only input Name as 'My Special NFT 1' and Symbol as 'MSNFT1'. Do not input or change other information and file. Scroll down and click Publish on Base. Then wait until transaction confirmation. Click view collection. Get collection detail.",
+                  referenceUrl: "https://magiceden.io",
+                },
+                {
+                  id: "vitalik-task",
+                  task: "Get Vitalik Buterin's Ethereum address",
+                  referenceUrl: "https://etherscan.io/address/vitalik.eth",
+                },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  className="w-full px-4 py-3 rounded-md bg-white/10 text-white hover:bg-white/20 text-left cursor-pointer"
+                  onClick={() => {
+                    createNodeAtPosition(
+                      "prompt",
+                      { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+                      pendingConnection,
+                      item.task
+                    );
+                    setIsRecallModalOpen(false);
+                  }}
+                >
+                  <div className="font-medium mb-1">{item.task}</div>
+                  <div className="text-xs text-gray-400 break-all">
+                    {item.referenceUrl}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

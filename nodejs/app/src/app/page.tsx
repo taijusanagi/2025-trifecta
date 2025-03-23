@@ -401,7 +401,6 @@ export default function Home() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [bucketId, setBucketId] = useState("");
-  const [name, setName] = useState("");
 
   useEffect(() => {
     const bucketId = window.localStorage.getItem("bucketId");
