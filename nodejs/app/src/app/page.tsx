@@ -11,6 +11,7 @@ import { CircleOff, Loader2, Workflow, X } from "lucide-react";
 import clsx from "clsx";
 import { ReactFlowProvider } from "reactflow";
 import FlowEditor from "@/components/reactflow/FlowEditor";
+import { ToastContainer, toast } from "react-toastify";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
@@ -68,22 +69,40 @@ export default function Home() {
         throw new Error("Wallet client not available");
       }
       console.log("Handling wallet request:", request);
+
       try {
-        let result;
-        if (request.method === "eth_sendTransaction" && request.params) {
-          result = await walletClient.sendTransaction({
-            to: request.params[0].to,
-            value: request.params[0].value,
-            data: request.params[0].data,
-          });
-        } else if (request.method === "personal_sign" && request.params) {
-          result = await walletClient.signMessage({
-            message: hexToString(request.params[0]),
-          });
-        } else {
-          throw new Error(`Not Implemented Method: ${request.method}`);
-        }
-        return { result };
+        const response = await toast.promise(
+          (async () => {
+            let result;
+            if (request.method === "eth_sendTransaction" && request.params) {
+              result = await walletClient.sendTransaction({
+                to: request.params[0].to,
+                value: request.params[0].value,
+                data: request.params[0].data,
+              });
+            } else if (request.method === "personal_sign" && request.params) {
+              result = await walletClient.signMessage({
+                message: hexToString(request.params[0]),
+              });
+            } else {
+              throw new Error(`Not Implemented Method: ${request.method}`);
+            }
+            return { result };
+          })(),
+          {
+            pending: `${request.method} is pending...`,
+            success: `${request.method} succeeded 👌`,
+            error: {
+              render({ data }: any) {
+                return `${request.method} failed: ${
+                  data.message || "Unknown error"
+                } 🤯`;
+              },
+            },
+          }
+        );
+
+        return response;
       } catch (error: any) {
         console.error("Error handling wallet request:", error);
         return { error: error.message || "Unknown error" };
@@ -635,6 +654,7 @@ export default function Home() {
           </ReactFlowProvider>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
