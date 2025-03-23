@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAccount, useWalletClient } from "wagmi";
 import { JsonRpcRequest } from "@/types/json-rpc-request";
 import { hexToString } from "viem";
-import { Loader2, Workflow, X, Database } from "lucide-react";
+import { Loader2, Workflow, X, Database, UploadCloud } from "lucide-react";
 import clsx from "clsx";
 import { ReactFlowProvider } from "reactflow";
 import FlowEditor from "@/components/reactflow/FlowEditor";
@@ -452,18 +452,19 @@ export default function Home() {
           <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-xl p-4 shadow-lg w-full">
             <h1 className="text-3xl font-bold mb-2">Hello!!</h1>
             <p className="text-xl text-gray-400 mb-6">What can I do for you?</p>
-
-            <Textarea
-              value={task}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.length <= 450) {
-                  setTask(value);
-                }
-              }}
-              placeholder="Enter a goal for the session"
-              className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
-            />
+            <div className="bg-black">
+              <Textarea
+                value={task}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 450) {
+                    setTask(value);
+                  }
+                }}
+                placeholder="Enter a goal for the session"
+                className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
+              />
+            </div>
             <div className="text-right text-sm text-white/50 mt-1">
               {task.length}/450 characters
             </div>
@@ -486,7 +487,7 @@ export default function Home() {
           </div>
 
           {/* Featured examples section remains unchanged */}
-          <div className="mt-8 w-full text-left">
+          <div className="mt-8 w-full text-left mb-12">
             <div className="flex gap-3 mb-6">
               {categories.map((cat) => (
                 <button
@@ -536,12 +537,19 @@ export default function Home() {
                 <h2 className="text-xl font-semibold text-white">
                   Glider Computer
                 </h2>{" "}
-                {sessionStatus === "idle" && (
-                  <Database
-                    className="w-5 h-5 text-gray-400 ml-4 cursor-pointer"
-                    onClick={() => setIsModalOpen(true)}
-                  />
-                )}
+                <div
+                  className={`flex items-center ml-4 ${
+                    sessionStatus === "idle"
+                      ? "cursor-pointer"
+                      : "cursor-not-allowed opacity-50"
+                  }`}
+                  onClick={() => {
+                    if (sessionStatus === "idle") setIsModalOpen(true);
+                  }}
+                >
+                  <UploadCloud className="w-5 h-5 text-gray-400 mr-1" />
+                  <span className="text-sm text-gray-300">Recall Network</span>
+                </div>
               </div>
 
               {/* === Session Status Box === */}
@@ -643,7 +651,8 @@ export default function Home() {
           </div>
 
           {/* === RIGHT PANEL === */}
-          <div className="w-full lg:w-7/10 flex flex-col gap-4">
+          <div className="w-full lg:w-7/10 flex flex-col h-full gap-4">
+            {/* Fixed-height video or iframe with aspect ratio */}
             <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl relative border border-white/10 backdrop-blur-md bg-white/5 hover:border-white/20 transition">
               <div className="absolute top-3 left-4 z-10 bg-black/40 px-3 py-1 text-sm rounded-md font-semibold">
                 {sessionStatus == "idle" ? "Recorded Video" : "Live View"}
@@ -672,13 +681,10 @@ export default function Home() {
               )}
             </div>
 
-            <Textarea
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              disabled={true}
-              placeholder="Enter a goal for the session"
-              className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white min-h-[120px] rounded-md"
-            />
+            {/* Fills remaining vertical space */}
+            <div className="w-full flex-grow text-sm min-h-0 bg-black/40 backdrop-blur-sm border border-white/10 text-gray-400 p-4 rounded-md overflow-y-auto">
+              {task}
+            </div>
           </div>
         </main>
       )}
