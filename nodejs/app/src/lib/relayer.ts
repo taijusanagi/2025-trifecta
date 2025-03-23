@@ -1,5 +1,5 @@
 import { createClient } from "redis";
-import { Account } from "../types/account";
+import { SessionInfo } from "../types/session-info";
 import { JsonRpcRequest } from "../types/json-rpc-request";
 
 const redis = createClient(
@@ -10,19 +10,19 @@ if (!redis.isOpen) {
   await redis.connect();
 }
 
-export const setSessionAccount = async (
+export const setSessionInfo = async (
   sessionId: string,
-  account: Account
+  account: SessionInfo
 ) => {
   await redis.set(`${sessionId}:account`, JSON.stringify(account));
 };
 
-export const getSessionAccount = async (sessionId: string) => {
+export const getSessionInfo = async (sessionId: string) => {
   const data = await redis.get(`${sessionId}:account`);
   if (!data) {
     throw new Error("Session account not found");
   }
-  return JSON.parse(data) as Account;
+  return JSON.parse(data) as SessionInfo;
 };
 
 export const setSessionRequest = async (

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionAccount } from "@/lib/relayer";
+import { getSessionInfo } from "@/lib/relayer";
 
 export async function GET(
   _: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const { sessionId } = await params;
-  const sessionAccount = await getSessionAccount(sessionId);
+  const sessionAccount = await getSessionInfo(sessionId);
   return NextResponse.json(sessionAccount);
 }

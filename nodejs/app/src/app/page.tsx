@@ -11,12 +11,14 @@ import { CircleOff, Loader2, Workflow, X } from "lucide-react";
 import clsx from "clsx";
 import { ReactFlowProvider } from "reactflow";
 import FlowEditor from "@/components/reactflow/FlowEditor";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
   const BROWSER_USE_API_URL = process.env.NEXT_PUBLIC_BROWSER_USE_API_URL;
   const BROWSER_USE_API_KEY = process.env.NEXT_PUBLIC_BROWSER_USE_API_KEY;
 
   const POLLING_INTERVAL = 5000;
+
   const { openConnectModal } = useConnectModal();
 
   const { address, chain } = useAccount();
@@ -148,11 +150,39 @@ export default function Home() {
     setSessionStatus("creating");
 
     try {
+      let anchorSessionId = "";
+      let liveViewUrl = "";
+      if (process.env.NEXT_PUBLIC_IS_LOCAL_BROWSER !== "true") {
+        console.log("Starting anchorbrowser...");
+        const anchorbrowserResponse = await fetch("/anchorbrowser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!anchorbrowserResponse.ok) {
+          throw new Error("Failed to start anchorbrowser.");
+        }
+
+        const { id, live_view_url } = await anchorbrowserResponse.json();
+        liveViewUrl = live_view_url;
+        console.log("Starting anchorbrowser done!");
+        console.log("anchorSessionId", id);
+        console.log("liveViewUrl", liveViewUrl);
+        setLiveViewUrl(liveViewUrl);
+        anchorSessionId = id;
+      }
+
       console.log("Starting session...", { address, chainId: chain.id });
       const createSessionResponse = await fetch("/relayer/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, chainId: chain.id }),
+        body: JSON.stringify({
+          address,
+          chainId: chain.id,
+          task,
+          anchorSessionId,
+          liveViewUrl,
+        }),
       });
 
       if (!createSessionResponse.ok) {
@@ -165,27 +195,6 @@ export default function Home() {
       setSessionId(sessionId);
       setSessionStatus("active");
       setIsPolling(true);
-
-      let anchorSessionId = "";
-      if (process.env.NEXT_PUBLIC_IS_LOCAL_BROWSER !== "true") {
-        console.log("Starting anchorbrowser...");
-        const anchorbrowserResponse = await fetch("/anchorbrowser", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!anchorbrowserResponse.ok) {
-          throw new Error("Failed to start anchorbrowser.");
-        }
-
-        const { id, live_view_url: liveViewUrl } =
-          await anchorbrowserResponse.json();
-        console.log("Starting anchorbrowser done!");
-        console.log("anchorSessionId", id);
-        console.log("liveViewUrl", liveViewUrl);
-        setLiveViewUrl(liveViewUrl);
-        anchorSessionId = id;
-      }
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -237,6 +246,29 @@ export default function Home() {
       logsEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [thinking]);
+
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const querySessionId = searchParams.get("sessionId");
+    if (querySessionId) {
+      setSessionId(querySessionId);
+      setSessionStatus("active");
+      setIsRunning(true);
+      setIsPolling(true);
+
+      fetch(`/relayer/${querySessionId}/info`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("data", data);
+          if (data?.liveViewUrl) {
+            setLiveViewUrl(data.liveViewUrl);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch session info:", err);
+        });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">

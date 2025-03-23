@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getSessionAccount,
+  getSessionInfo,
   setSessionRequest,
   waitForSessionResponse,
   deleteSessionResponse,
@@ -15,7 +15,7 @@ export async function POST(
     const { sessionId } = await params;
     const body: JsonRpcRequest = await req.json();
     console.log(`Received request for session ${sessionId}:`, body);
-    const { address, chainId } = await getSessionAccount(sessionId);
+    const { address, chainId } = await getSessionInfo(sessionId);
     let result;
     switch (body.method) {
       case "eth_account":
