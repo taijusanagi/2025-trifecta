@@ -93,13 +93,12 @@ export default function Home() {
   );
 
   const pollForRequests = useCallback(
-    async (sessionId: string, sessionStatus: string) => {
+    async (sessionId: string): Promise<boolean | undefined> => {
       // Return early if conditions aren't met
       if (isPollingRef.current) return;
-
-      let updatedSessionStatus = "";
       isPollingRef.current = true;
-
+      let isSuccessed = undefined;
+      let updatedSessionStatus = "";
       try {
         const logRes = await fetch(`/relayer/${sessionId}/log`);
         if (logRes.ok) {
@@ -109,13 +108,16 @@ export default function Home() {
             const latestLog = logs[logs.length - 1];
             const done = latestLog.action.find((obj: any) => obj.done);
             if (done) {
+              const {
+                done: { success },
+              } = done;
+              isSuccessed = success;
               updatedSessionStatus = "idle";
               setSessionStatus("idle");
             }
           }
         }
 
-        updatedSessionStatus = updatedSessionStatus || sessionStatus;
         if (updatedSessionStatus !== "idle") {
           const response = await fetch(`/relayer/${sessionId}/request`, {
             method: "GET",
@@ -150,11 +152,12 @@ export default function Home() {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         if (updatedSessionStatus !== "idle") {
           timeoutRef.current = setTimeout(
-            () => pollForRequests(sessionId, updatedSessionStatus),
+            () => pollForRequests(sessionId),
             POLLING_INTERVAL
           );
         }
       }
+      return isSuccessed;
     },
     [handleWalletRequest]
   );
@@ -260,7 +263,7 @@ export default function Home() {
           currentSessionStatus = "active";
         }
         setSessionStatus(currentSessionStatus as any);
-        pollForRequests(sessionId, currentSessionStatus);
+        pollForRequests(sessionId);
       } catch (err) {
         console.error("Failed to fetch session info:", err);
       }
@@ -561,6 +564,7 @@ export default function Home() {
             <div className="w-full h-full rounded-lg border border-white/10 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] shadow-2xl overflow-hidden">
               <FlowEditor
                 start={(prompt) => start(address!, chain!.id, prompt)}
+                pollForRequests={(sessionId) => pollForRequests(sessionId)}
               />
             </div>
           </ReactFlowProvider>

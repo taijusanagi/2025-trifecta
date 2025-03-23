@@ -28,8 +28,10 @@ const STORAGE_KEY = {
 
 export default function FlowEditor({
   start,
+  pollForRequests,
 }: {
   start: (prompt: string) => Promise<string>;
+  pollForRequests: (sessionId: string) => Promise<boolean | undefined>;
 }) {
   const initialNodes: Node[] = [
     {
@@ -173,7 +175,39 @@ export default function FlowEditor({
       if (currentNode?.type === "prompt") {
         const sessionId = await start(prompt);
         console.log("Session ID:", sessionId);
-        await new Promise((res) => setTimeout(res, 5000));
+
+        const maxAttempts = 1000; // a lot
+        const pollInterval = 1000; // 1 second
+        let attempts = 0;
+
+        const result: boolean | undefined = await new Promise((resolve) => {
+          const interval = setInterval(async () => {
+            const res = await pollForRequests(sessionId);
+            attempts++;
+
+            if (res !== undefined || attempts >= maxAttempts) {
+              clearInterval(interval);
+              resolve(res);
+            }
+          }, pollInterval);
+        });
+
+        if (result !== undefined) {
+          // Pass data to node
+          setNodes((nds) =>
+            nds.map((node) =>
+              node.id === id
+                ? {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      result, // 👈 pass result (boolean)
+                    },
+                  }
+                : node
+            )
+          );
+        }
       }
 
       setNodes((nds) =>

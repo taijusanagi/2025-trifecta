@@ -1,5 +1,7 @@
 import { Handle, Position, useReactFlow } from "reactflow";
 import { useEffect, useState } from "react";
+import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import clsx from "clsx";
 
 export default function PromptNode({ data, id }: any) {
   const [opacity, setOpacity] = useState(1);
@@ -41,12 +43,26 @@ export default function PromptNode({ data, id }: any) {
 
   return (
     <div
-      className="relative w-64 rounded border border-white/20 bg-white/10 text-white p-4 shadow transition-all duration-300"
+      className={clsx(
+        "relative w-64 rounded border border-white/20 bg-white/10 text-white p-4 shadow transition-all duration-300",
+        data.isRunning && "ring-2 ring-white/20"
+      )}
       style={{
         opacity: data.isRunning ? opacity : 1,
         transform: `scale(${scale})`,
       }}
     >
+      {/* ✅ Status icon */}
+      {data.result === true && (
+        <CheckCircle className="absolute top-2 right-2 w-5 h-5 text-green-400" />
+      )}
+      {data.result === false && (
+        <XCircle className="absolute top-2 right-2 w-5 h-5 text-red-400" />
+      )}
+      {data.isRunning && (
+        <Loader2 className="absolute top-2 right-2 w-5 h-5 text-white animate-spin" />
+      )}
+
       <div className="font-semibold mb-2 text-white">Task Node</div>
 
       {data.image && (
