@@ -26,6 +26,8 @@ export default function PromptNode({ data, id }: any) {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
 
+    if (value.length > 450) return;
+
     setNodes((nds) =>
       nds.map((node) =>
         node.id === id
@@ -47,7 +49,7 @@ export default function PromptNode({ data, id }: any) {
   return (
     <div
       className={clsx(
-        "relative w-64 rounded border border-white/20 bg-white/10 text-white p-4 shadow transition-all duration-300",
+        "relative w-80 rounded border border-white/20 bg-white/10 text-white p-4 shadow transition-all duration-300",
         data.isRunning && "ring-2 ring-white/20"
       )}
       style={{
@@ -100,11 +102,14 @@ export default function PromptNode({ data, id }: any) {
       <textarea
         className="w-full p-2 text-sm bg-white/10 text-white placeholder-white/60 border border-white/20 rounded resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
         placeholder="Enter your prompt..."
-        rows={3}
+        rows={12}
         value={data.prompt || ""}
         onChange={handleChange}
         disabled={data.isRunning}
       />
+      <div className="text-right text-xs text-white/50 mt-1">
+        {data.prompt?.length || 0}/450 characters
+      </div>
 
       <Handle
         type="target"
