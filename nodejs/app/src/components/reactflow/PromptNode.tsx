@@ -41,6 +41,9 @@ export default function PromptNode({ data, id }: any) {
     );
   };
 
+  const hasFinished = data.result !== undefined;
+  const isVideoReady = !!data.videoUrl;
+
   return (
     <div
       className={clsx(
@@ -65,13 +68,34 @@ export default function PromptNode({ data, id }: any) {
 
       <div className="font-semibold mb-2 text-white">Task Node</div>
 
-      {data.liveViewUrl && (
-        <iframe
-          src={data.liveViewUrl}
-          title="Live View"
-          className="w-full h-32 rounded mb-2 border border-white/20"
-        />
-      )}
+      {/* ✅ Conditional rendering area */}
+      <div className="mb-2 w-full h-32 rounded border border-white/20 overflow-hidden flex items-center justify-center bg-black/10">
+        {hasFinished && !isVideoReady ? (
+          // ⏳ Show loading while waiting for video
+          <div className="flex items-center text-white/60">
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            Waiting for recording...
+          </div>
+        ) : isVideoReady ? (
+          // 🎥 Show recorded video
+          <video
+            src={data.videoUrl}
+            controls
+            autoPlay
+            muted
+            className="w-full h-full object-cover"
+          />
+        ) : data.liveViewUrl ? (
+          // 📡 Show live view if still running
+          <iframe
+            src={data.liveViewUrl}
+            title="Live View"
+            className="w-full h-full"
+            allow="clipboard-read; clipboard-write"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        ) : null}
+      </div>
 
       <textarea
         className="w-full p-2 text-sm bg-white/10 text-white placeholder-white/60 border border-white/20 rounded resize-none focus:outline-none focus:ring-2 focus:ring-white/30"
@@ -79,6 +103,7 @@ export default function PromptNode({ data, id }: any) {
         rows={3}
         value={data.prompt || ""}
         onChange={handleChange}
+        disabled={data.isRunning}
       />
 
       <Handle

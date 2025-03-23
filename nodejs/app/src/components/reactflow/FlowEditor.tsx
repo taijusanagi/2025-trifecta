@@ -29,9 +29,11 @@ const STORAGE_KEY = {
 export default function FlowEditor({
   start,
   pollForRequests,
+  pollRecording,
 }: {
   start: (prompt: string) => Promise<string>;
   pollForRequests: (sessionId: string) => Promise<boolean | undefined>;
+  pollRecording: (sessionId: string) => Promise<string | undefined>;
 }) {
   const initialNodes: Node[] = [
     {
@@ -170,6 +172,8 @@ export default function FlowEditor({
       const prompt = currentNode?.data?.prompt || "";
 
       if (currentNode?.type === "prompt") {
+        console.log("Task node prompt: ", prompt);
+
         const sessionId = await start(prompt);
         console.log("Session ID:", sessionId);
 
@@ -224,6 +228,24 @@ export default function FlowEditor({
                 : node
             )
           );
+
+          pollRecording(sessionId).then((videoUrl) => {
+            if (videoUrl) {
+              setNodes((nds) =>
+                nds.map((node) =>
+                  node.id === id
+                    ? {
+                        ...node,
+                        data: {
+                          ...node.data,
+                          videoUrl,
+                        },
+                      }
+                    : node
+                )
+              );
+            }
+          });
         }
       }
 

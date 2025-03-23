@@ -639,6 +639,7 @@ export default function Home() {
               <FlowEditor
                 start={(prompt) => start(address!, chain!.id, prompt)}
                 pollForRequests={(sessionId) => pollForRequests(sessionId)}
+                pollRecording={(sessionId) => pollRecording(sessionId)}
               />
             </div>
           </ReactFlowProvider>
