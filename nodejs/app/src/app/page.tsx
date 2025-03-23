@@ -409,9 +409,13 @@ export default function Home() {
   const [bucketId, setBucketId] = useState("");
 
   useEffect(() => {
-    const bucketId = window.localStorage.getItem("bucketId");
-    if (bucketId) {
-      setBucketId(bucketId);
+    const existingBucketId = window.localStorage.getItem("bucketId");
+    if (existingBucketId) {
+      setBucketId(existingBucketId);
+    } else {
+      const defaultBucketId = "0xFF0000000000000000000000000000000000019B";
+      window.localStorage.setItem("bucketId", defaultBucketId);
+      setBucketId(defaultBucketId);
     }
   }, []);
 
