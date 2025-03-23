@@ -294,6 +294,30 @@ export default function Home() {
     }
   }, []);
 
+  const renderIndented = (value: any): React.ReactNode => {
+    if (typeof value === "object" && value !== null) {
+      return (
+        <ul className={`ml-1 mt-1 space-y-1`}>
+          {Object.entries(value).map(([k, v], i) => (
+            <li key={i}>
+              <span className="font-medium text-gray-300">{k}:</span>
+              <div className="ml-4">
+                {typeof v === "object" && v !== null ? (
+                  renderIndented(v)
+                ) : (
+                  <span className="text-gray-200 text-sm block mt-0.5">
+                    {String(v)}
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return <span className="text-sm text-gray-200">{String(value)}</span>;
+  };
+
   return (
     <div className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2c2c2c] text-white">
       <header className="mb-6 flex justify-between items-center">
@@ -436,37 +460,41 @@ export default function Home() {
                   </button>
                 )}
               </div>
-              <ul className="space-y-3 pr-1 overflow-y-auto no-scrollbar flex-1">
+              <ul className="space-y-4">
                 {thinking.map((step, index) => {
                   const nonNullActions = Object.entries(
                     step.action?.[0] || {}
                   ).filter(([, value]) => value !== null);
+
                   return (
                     <li
                       key={index}
-                      className="p-3 bg-white/10 rounded-md border border-white/20 text-sm break-all"
+                      className="p-4 bg-white/10 rounded-md border border-white/20 text-sm break-words"
                     >
-                      <p className="font-medium">Step {index + 1}</p>
-                      <p className="text-gray-300">
-                        <span className="font-semibold">Previous Goal:</span>{" "}
-                        {step.current_state.evaluation_previous_goal}
+                      <p className="font-medium text-white">Step {index + 1}</p>
+                      <p className="text-gray-300 mt-2">
+                        <p className="font-semibold">Previous Goal:</p>
+                        <p>{step.current_state.evaluation_previous_goal}</p>
                       </p>
-                      <p className="text-gray-300">
-                        <span className="font-semibold">Next Goal:</span>{" "}
-                        {step.current_state.next_goal}
+                      <p className="text-gray-300 mt-2">
+                        <p className="font-semibold">Next Goal:</p>
+                        <p>{step.current_state.next_goal}</p>
                       </p>
+
                       {nonNullActions.length > 0 && (
-                        <div className="mt-1">
-                          <p className="font-semibold">Actions:</p>
-                          <ul className="list-disc list-inside text-gray-200">
+                        <div className="mt-2">
+                          <p className="font-semibold text-gray-300">
+                            Actions:
+                          </p>
+                          <ul className="mt-1 text-gray-200">
                             {nonNullActions.map(([key, value], i) => (
-                              <li key={i}>
-                                <span className="font-medium">{key}</span>:{" "}
-                                <span className="text-sm">
-                                  {typeof value === "object"
-                                    ? JSON.stringify(value, null, 2)
-                                    : String(value)}
+                              <li key={i} className="mt-1">
+                                <span className="font-medium text-gray-300">
+                                  {key}:
                                 </span>
+                                <div className="ml-4">
+                                  {renderIndented(value)}
+                                </div>
                               </li>
                             ))}
                           </ul>
@@ -475,8 +503,6 @@ export default function Home() {
                     </li>
                   );
                 })}
-                {/* Invisible element to scroll to */}
-                <div ref={logsEndRef} />
               </ul>
             </div>
           </div>
